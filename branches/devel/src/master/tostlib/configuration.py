@@ -41,7 +41,7 @@ else:
 
 
 #==========================================================================
-LEVEL_SITE    = 0	# option is defined in level configuration
+LEVEL_SITE    = 0	# option is defined in site configuration
 LEVEL_USER    = 1	# option is definied in user configuration
 LEVEL_PROJECT = 2	# option is defined in project configuration
 #==========================================================================
