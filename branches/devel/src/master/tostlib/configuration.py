@@ -22,15 +22,25 @@
 
 
 import os
+import sys
 
-from singleton import Singleton
+import logging
+import singleton
 
 
 #==========================================================================
-SITE_CONFIG_FILENAMES   = ('/etc/tostdk',)		# absolute path
-USER_CONFIG_FILENAMES   = ('~/.tostdk',)		# absolute path
-PROJECT_CONFIG_FILENAME = '.tostdk/config'		# relative path
-#--------------------------------------------------------------------------
+if sys.platform == 'win32':
+	SITE_CONFIG_FILENAMES   = (os.path.join(os.getcwd(),'tostdk.site.cnf'),)
+	USER_CONFIG_FILENAMES   = ('~\\tostdk.cnf',)
+	PROJECT_CONFIG_FILENAME = '.tostdk\\config'		# relative path
+else:
+	SITE_CONFIG_FILENAMES   = ('/etc/tostdk',)
+	USER_CONFIG_FILENAMES   = ('~/.tostdk',)
+	PROJECT_CONFIG_FILENAME = '.tostdk/config'		# relative path
+#==========================================================================
+
+
+#==========================================================================
 LEVEL_SITE    = 0	# option is defined in level configuration
 LEVEL_USER    = 1	# option is definied in user configuration
 LEVEL_PROJECT = 2	# option is defined in project configuration
@@ -62,7 +72,7 @@ CONFIGURATION = {
 			'level'  : LEVEL_USER,
 			'desc'   : "Debug mode",
 			'type'   : TYPE_BOOL,
-			'default': False
+			'default': True
 		},
 
 		#------------------------------------------------------------------
@@ -71,7 +81,7 @@ CONFIGURATION = {
 			'level'  : LEVEL_USER,
 			'desc'   : "Verbose mode",
 			'type'   : TYPE_BOOL,
-			'default': False
+			'default': True
 		}
 	}
 }
@@ -79,7 +89,7 @@ CONFIGURATION = {
 
 
 #==========================================================================
-class Configuration ( Singleton ):
+class Configuration ( singleton.Singleton ):
 #==========================================================================
 
 	s_instance = None
@@ -88,7 +98,7 @@ class Configuration ( Singleton ):
 	def __init__ ( self ):
 	#----------------------------------------------------------------------
 
-		Singleton.__init__(self)
+		singleton.Singleton.__init__(self)
 
 		self.m_site_filename = self.__find_site_configuration()
 		self.m_user_filename = self.__find_user_configuration()
@@ -102,14 +112,17 @@ class Configuration ( Singleton ):
 		self.m_sections = {}
 
 		if self.m_site_filename:
+			logging.message('Loading site configuration from ' + self.m_site_filename)
 			self.__load_configuration(LEVEL_SITE, self.m_site_filename)
 
 		if self.m_user_filename:
+			logging.message('Loading user configuration from ' + self.m_user_filename)
 			self.__load_configuration(LEVEL_USER, self.m_user_filename)
 
 		if p_project_path:
 			l_filename = self.__find_project_configuration(p_project_path)
 			if os.path.exists(l_filename):
+				logging.message('Loading project configuration from ' + l_filename)
 				self.__load_configuration(LEVEL_PROJECT, l_filename)
 
 	#----------------------------------------------------------------------
@@ -117,10 +130,12 @@ class Configuration ( Singleton ):
 	#----------------------------------------------------------------------
 
 		if self.m_user_filename:
+			logging.message('Saving user configuration to ' + self.m_user_filename)
 			self.__save_configuration(LEVEL_USER, self.m_user_filename)
 
 		if p_project_path:
 			l_filename = self.__find_project_configuration(p_project_path)
+			logging.message('Saving project configuration to ' + l_filename)
 			self.__save_configuration(LEVEL_PROJECT, l_filename)
 
 	#----------------------------------------------------------------------
@@ -141,9 +156,11 @@ class Configuration ( Singleton ):
 
 		l_section = p_section.lower()
 
-		if CONFIGURATION.has_key(l_section):
-			return CONFIGURATION[l_section].iterkeys()
-		return None
+		if not CONFIGURATION.has_key(l_section):
+			logging.error('Unknow configuration section ' + p_section)
+			return None
+
+		return CONFIGURATION[l_section].iterkeys()
 
 	#----------------------------------------------------------------------
 	def has_option ( self, p_section, p_option ):
@@ -175,10 +192,15 @@ class Configuration ( Singleton ):
 		l_section = p_section.lower()
 		l_option  = p_option.lower()
 
-		if CONFIGURATION.has_key(l_section) and \
-		   CONFIGURATION[l_section].has_key(l_option):
-			return CONFIGURATION[l_section][l_option]['default']
-		return None
+		if not CONFIGURATION.has_key(l_section):
+			logging.error('Unknow configuration section ' + p_section)
+			return None
+
+		if not CONFIGURATION[l_section].has_key(l_option):
+			logging.error('Unknow configuration option ' + p_option)
+			return None
+
+		return CONFIGURATION[l_section][l_option]['default']
 
 	#----------------------------------------------------------------------
 	def get_option_desc ( self, p_section, p_option ):
@@ -187,12 +209,18 @@ class Configuration ( Singleton ):
 		l_section = p_section.lower()
 		l_option  = p_option.lower()
 
-		if CONFIGURATION.has_key(l_section) and \
-		   CONFIGURATION[l_section].has_key(l_option):
-			if CONFIGURATION[l_section][l_option].has_key('desc'):
-				return CONFIGURATION[l_section][l_option]['desc']
-			return ''
-		return None
+		if not CONFIGURATION.has_key(l_section):
+			logging.error('Unknow configuration section ' + p_section)
+			return None
+
+		if not CONFIGURATION[l_section].has_key(l_option):
+			logging.error('Unknow configuration option ' + p_option)
+			return None
+
+		if CONFIGURATION[l_section][l_option].has_key('desc'):
+			return CONFIGURATION[l_section][l_option]['desc']
+
+		return ''
 
 	#----------------------------------------------------------------------
 	def get_option_enum ( self, p_section, p_option ):
@@ -201,12 +229,18 @@ class Configuration ( Singleton ):
 		l_section = p_section.lower()
 		l_option  = p_option.lower()
 
-		if CONFIGURATION.has_key(l_section) and \
-		   CONFIGURATION[l_section].has_key(l_option):
-			if CONFIGURATION[l_section][l_option].has_key('enum'):
-				return CONFIGURATION[l_section][l_option]['enum']
-			return tuple()
-		return None
+		if not CONFIGURATION.has_key(l_section):
+			logging.error('Unknow configuration section ' + p_section)
+			return None
+
+		if not CONFIGURATION[l_section].has_key(l_option):
+			logging.error('Unknow configuration option ' + p_option)
+			return None
+
+		if CONFIGURATION[l_section][l_option].has_key('enum'):
+			return CONFIGURATION[l_section][l_option]['enum']
+
+		return tuple()
 
 	#----------------------------------------------------------------------
 	def get_option_level ( self, p_section, p_option ):
@@ -228,10 +262,15 @@ class Configuration ( Singleton ):
 		l_section = p_section.lower()
 		l_option  = p_option.lower()
 
-		if CONFIGURATION.has_key(l_section) and \
-		   CONFIGURATION[l_section].has_key(l_option):
-			return CONFIGURATION[l_section][l_option]['level']
-		return None
+		if not CONFIGURATION.has_key(l_section):
+			logging.error('Unknow configuration section ' + p_section)
+			return None
+
+		if not CONFIGURATION[l_section].has_key(l_option):
+			logging.error('Unknow configuration option ' + p_option)
+			return None
+
+		return CONFIGURATION[l_section][l_option]['level']
 
 	#----------------------------------------------------------------------
 	def set_option_value ( self, p_level, p_section, p_option, p_value ):
@@ -240,14 +279,24 @@ class Configuration ( Singleton ):
 		l_section = p_section.lower()
 		l_option  = p_option.lower()
 
-		if CONFIGURATION.has_key(l_section) and \
-		   CONFIGURATION[l_section].has_key(l_option):
-			if CONFIGURATION[l_section][l_option]['level'] >= p_level:
-				if not self.m_sections.has_key(l_section):
-					self.m_sections[l_section] = {}
-				self.m_sections[l_section][l_option] = {'level':p_level,'value':p_value}
-				return True
-		return False
+		if not CONFIGURATION.has_key(l_section):
+			logging.error('Unknow configuration section ' + p_section)
+			return False
+
+		if not CONFIGURATION[l_section].has_key(l_option):
+			logging.error('Unknow configuration option ' + p_option)
+			return False
+
+		if CONFIGURATION[l_section][l_option]['level'] < p_level:
+			logging.error('Wrong level for configuration option ' + p_option)
+			return False
+
+		if not self.m_sections.has_key(l_section):
+			self.m_sections[l_section] = {}
+
+		self.m_sections[l_section][l_option] = {'level':p_level,'value':p_value}
+
+		return True
 
 	#----------------------------------------------------------------------
 	def __find_site_configuration ( self ):
@@ -301,16 +350,19 @@ class Configuration ( Singleton ):
 
 				if l_beg == -1 or l_end == -1:
 					l_skip = True
+					logging.error('Malformed configuration section: ' + l_line + ' in ' + p_filename)
 					continue
 
 				l_section = l_line[l_beg+1:l_end].lower()
 
 				if not l_section:
 					l_skip = True
+					logging.error('Malformed configuration section: ' + l_line + ' in ' + p_filename)
 					continue
 
 				if not CONFIGURATION.has_key(l_section):
 					l_skip = True
+					logging.error('Unknow configuration section: ' + l_section + ' in ' + p_filename)
 					continue
 
 				l_skip = False
@@ -322,19 +374,23 @@ class Configuration ( Singleton ):
 				l_split = map(lambda x: x.strip().lower(), l_line.split('='))
 
 				if len(l_split) != 2:
+					logging.error('Malformed configuration option: ' + l_line + ' in ' + p_filename)
 					continue
 
 				l_option, l_string = l_split
 
 				if not CONFIGURATION[l_section].has_key(l_option):
+					logging.error('Unknow configuration option: ' + l_option + ' in ' + p_filename)
 					continue
 
 				if CONFIGURATION[l_section][l_option]['level'] < p_level:
+					logging.error('Wrong level for configuration option: ' + l_option + ' in ' + p_filename)
 					continue
 
 				l_type = CONFIGURATION[l_section][l_option]['type']
 
 				if not l_type['valid'](l_string):
+					logging.error('Invalid configuration option: ' + l_option + ' in ' + p_filename)
 					continue
 
 				l_value = l_type['read'](l_string)
