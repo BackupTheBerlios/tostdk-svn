@@ -110,6 +110,38 @@ CONFIGURATION = {
 	},
 
 	#----------------------------------------------------------------------
+	'drivers': {
+	#----------------------------------------------------------------------
+
+		#------------------------------------------------------------------
+		'driver_name': {
+		#------------------------------------------------------------------
+			'level'  : LEVEL_USER,
+			'desc'   : "Driver name",
+			'type'   : TYPE_VALID_STRING,
+			'default': "files_driver"
+		},
+
+		#------------------------------------------------------------------
+		'files_driver.input': {
+		#------------------------------------------------------------------
+			'level'  : LEVEL_USER,
+			'desc'   : "File driver input file",
+			'type'   : TYPE_VALID_STRING,
+			'default': "tostdk.input"
+		},
+
+		#------------------------------------------------------------------
+		'files_driver.output': {
+		#------------------------------------------------------------------
+			'level'  : LEVEL_USER,
+			'desc'   : "File driver output file",
+			'type'   : TYPE_VALID_STRING,
+			'default': "tostdk.output"
+		}
+	},
+
+	#----------------------------------------------------------------------
 	'project': {
 	#----------------------------------------------------------------------
 
@@ -165,7 +197,7 @@ class Configuration ( singleton.Singleton ):
 				logging.message('Loading project configuration from ' + l_filename)
 				if not self.__load_configuration(LEVEL_PROJECT, l_filename):
 					return False
-		
+
 		return True
 
 	#----------------------------------------------------------------------
@@ -182,7 +214,7 @@ class Configuration ( singleton.Singleton ):
 			logging.message('Saving project configuration to ' + l_filename)
 			if not self.__save_configuration(LEVEL_PROJECT, l_filename):
 				return False
-		
+
 		return True
 
 	#----------------------------------------------------------------------
