@@ -20,13 +20,14 @@
 # along with Tostdk.  If not, see <http://www.gnu.org/licenses/>.
 #==========================================================================
 
+
 import os
 
-import drivers.driver as driver
-import tostlib.configuration as configuration
+import driver
+
 
 #==========================================================================
-class Driver ( driver.Driver ):
+class FilesDriver ( driver.Driver ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
@@ -39,13 +40,11 @@ class Driver ( driver.Driver ):
 		self.m_output_handle = None
 
 	#----------------------------------------------------------------------
-	def open ( self ):
+	def open ( self, l_configuration ):
 	#----------------------------------------------------------------------
 
-		l_config = configuration.Configuration.get_instance()
-
-		l_input_path  = l_config.get_option_value('drivers', 'files_driver.input')
-		l_output_path = l_config.get_option_value('drivers', 'files_driver.output')
+		l_input_path  = l_configuration.get_option_value('drivers', 'files_driver.input')
+		l_output_path = l_configuration.get_option_value('drivers', 'files_driver.output')
 
 		if not l_input_path or not l_output_path:
 			return False

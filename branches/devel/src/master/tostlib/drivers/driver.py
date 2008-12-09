@@ -37,7 +37,7 @@ class Driver ( singleton.Singleton ):
 		singleton.Singleton.__init__(self)
 
 	#----------------------------------------------------------------------
-	def open ( self ):
+	def open ( self, l_configuration ):
 	#----------------------------------------------------------------------
 
 		raise NotImplementedError
