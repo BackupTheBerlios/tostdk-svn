@@ -32,11 +32,9 @@ import singleton
 if sys.platform == 'win32':
 	SITE_CONFIG_FILENAMES   = (os.path.join(os.getcwd(),'tostdk.site.cnf'),)
 	USER_CONFIG_FILENAMES   = ('~\\tostdk.cnf',)
-	PROJECT_CONFIG_FILENAME = '.tostdk\\config'		# relative path
 else:
 	SITE_CONFIG_FILENAMES   = ('/etc/tostdk',)
 	USER_CONFIG_FILENAMES   = ('~/.tostdk',)
-	PROJECT_CONFIG_FILENAME = '.tostdk/config'		# relative path
 #==========================================================================
 
 
@@ -49,14 +47,31 @@ LEVEL_PROJECT = 2	# option is defined in project configuration
 
 #==========================================================================
 TYPE_BOOL = {
+#==========================================================================
 	'desc' : "Boolean",
 	'enum' : ('false', 'true'),
 	'valid': lambda x: x.lower() in ('false', 'true'),
 	'read' : lambda x: x.lower() == 'true',
 	'write': lambda x: ['false','true'][bool(x)]
 }
-#==========================================================================
 
+#==========================================================================
+TYPE_STRING = {
+#==========================================================================
+	'desc' : "String",
+	'valid': lambda x: True,
+	'read' : lambda x: str(x),
+	'write': lambda x: str(x)
+}
+
+#==========================================================================
+TYPE_VALID_STRING = {
+#==========================================================================
+	'desc' : "Non empty string",
+	'valid': lambda x: x,
+	'read' : lambda x: str(x),
+	'write': lambda x: str(x)
+}
 
 #==========================================================================
 CONFIGURATION = {
@@ -82,6 +97,29 @@ CONFIGURATION = {
 			'desc'   : "Verbose mode",
 			'type'   : TYPE_BOOL,
 			'default': True
+		},
+
+		#------------------------------------------------------------------
+		'project_dir': {
+		#------------------------------------------------------------------
+			'level'  : LEVEL_SITE,
+			'desc'   : "Project sub-directory",
+			'type'   : TYPE_STRING,
+			'default': ".tostdk"
+		}
+	},
+
+	#----------------------------------------------------------------------
+	'project': {
+	#----------------------------------------------------------------------
+
+		#------------------------------------------------------------------
+		'slave_path': {
+		#------------------------------------------------------------------
+			'level'  : LEVEL_PROJECT,
+			'desc'   : "Remote path",
+			'type'   : TYPE_VALID_STRING,
+			'default': ""
 		}
 	}
 }
@@ -113,17 +151,22 @@ class Configuration ( singleton.Singleton ):
 
 		if self.m_site_filename:
 			logging.message('Loading site configuration from ' + self.m_site_filename)
-			self.__load_configuration(LEVEL_SITE, self.m_site_filename)
+			if not self.__load_configuration(LEVEL_SITE, self.m_site_filename):
+				return False
 
 		if self.m_user_filename:
 			logging.message('Loading user configuration from ' + self.m_user_filename)
-			self.__load_configuration(LEVEL_USER, self.m_user_filename)
+			if not self.__load_configuration(LEVEL_USER, self.m_user_filename):
+				return False
 
 		if p_project_path:
 			l_filename = self.__find_project_configuration(p_project_path)
 			if os.path.exists(l_filename):
 				logging.message('Loading project configuration from ' + l_filename)
-				self.__load_configuration(LEVEL_PROJECT, l_filename)
+				if not self.__load_configuration(LEVEL_PROJECT, l_filename):
+					return False
+		
+		return True
 
 	#----------------------------------------------------------------------
 	def save ( self, p_project_path = '' ):
@@ -131,12 +174,16 @@ class Configuration ( singleton.Singleton ):
 
 		if self.m_user_filename:
 			logging.message('Saving user configuration to ' + self.m_user_filename)
-			self.__save_configuration(LEVEL_USER, self.m_user_filename)
+			if not self.__save_configuration(LEVEL_USER, self.m_user_filename):
+				return False
 
 		if p_project_path:
 			l_filename = self.__find_project_configuration(p_project_path)
 			logging.message('Saving project configuration to ' + l_filename)
-			self.__save_configuration(LEVEL_PROJECT, l_filename)
+			if not self.__save_configuration(LEVEL_PROJECT, l_filename):
+				return False
+		
+		return True
 
 	#----------------------------------------------------------------------
 	def sections_iterator ( self ):
@@ -323,14 +370,19 @@ class Configuration ( singleton.Singleton ):
 	def __find_project_configuration ( self, p_project_path ):
 	#----------------------------------------------------------------------
 
-		l_filename = os.path.join(p_project_path, PROJECT_CONFIG_FILENAME)
+		l_project_dir = self.get_option_value('general', 'project_dir')
+		l_filename    = os.path.join(p_project_path, l_project_dir, 'config')
 		return l_filename
 
 	#----------------------------------------------------------------------
 	def __load_configuration ( self, p_level, p_filename ):
 	#----------------------------------------------------------------------
 
-		l_handle = open(p_filename, 'rU')
+		try:
+			l_handle = open(p_filename, 'rU')
+		except:
+			logging.error("Can't open file: " + p_filename)
+			return False
 
 		l_section = ''
 		l_skip    = False
@@ -398,12 +450,17 @@ class Configuration ( singleton.Singleton ):
 				self.m_sections[l_section][l_option] = {'level':p_level,'value':l_value}
 
 		l_handle.close()
+		return True
 
 	#----------------------------------------------------------------------
 	def __save_configuration ( self, p_level, p_filename ):
 	#----------------------------------------------------------------------
 
-		l_handle = open(p_filename, 'wb')
+		try:
+			l_handle = open(p_filename, 'wb')
+		except:
+			logging.error("Can't create file: " + p_filename)
+			return False
 
 		for l_section in self.m_sections.iterkeys():
 			l_section_started = False
@@ -414,7 +471,7 @@ class Configuration ( singleton.Singleton ):
 					continue
 
 				if not l_section_started:
-					l_handle.write('[' + l_section + ']' + os.linesep)
+					l_handle.write(os.linesep + '[' + l_section + ']' + os.linesep)
 					l_section_started = True
 
 				if CONFIGURATION[l_section][l_option].has_key('desc'):
@@ -424,11 +481,12 @@ class Configuration ( singleton.Singleton ):
 				l_type   = CONFIGURATION[l_section][l_option]['type']
 				l_string = l_type['write'](self.m_sections[l_section][l_option]['value'])
 				l_hande.write(l_option + ' = ' + l_string + os.linesep)
-			
+
 			if l_section_started:
 				l_handle.write(os.linesep)
 
 		l_handle.close()
+		return True
 
 
 #==========================================================================
