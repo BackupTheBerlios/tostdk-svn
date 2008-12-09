@@ -26,7 +26,7 @@ import drivers.driver as driver
 import tostlib.configuration as configuration
 
 #==========================================================================
-class FilesDriver ( driver.Driver ):
+class Driver ( driver.Driver ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
@@ -71,6 +71,8 @@ class FilesDriver ( driver.Driver ):
 		if self.m_output_handle != None:
 			self.m_output_handle.close()
 
+		return True
+
 	#----------------------------------------------------------------------
 	def read ( self ):
 	#----------------------------------------------------------------------
@@ -82,6 +84,7 @@ class FilesDriver ( driver.Driver ):
 	#----------------------------------------------------------------------
 
 		self.m_output_handle.write(p_data)
+		return True
 
 
 #==========================================================================
