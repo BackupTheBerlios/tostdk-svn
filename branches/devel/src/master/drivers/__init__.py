@@ -1,6 +1,6 @@
 #==========================================================================
 # tostdk :: drivers :: __init__.py
-# Drivers package
+# Drivers package - implements driver selection
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz
 #--------------------------------------------------------------------------
@@ -21,6 +21,8 @@
 #==========================================================================
 
 
+import tostlib.configuration as configuration
+
 import driver
 import files_driver.files_driver as files_driver
 
@@ -33,13 +35,16 @@ DRIVERS = {
 
 
 #==========================================================================
-def get_driver_instance ( p_driver_name ):
+def get_driver_instance ( ):
 #==========================================================================
+
+	l_config = configuration.Configuration.get_instance()
+	l_name   = l_config.get_option_value('drivers', 'driver_name')
 
 	driver.Driver.del_instance()
 
-	if DRIVERS.has_key(p_driver_name):
-		return DRIVERS[p_driver_name].get_instance()
+	if DRIVERS.has_key(l_name):
+		return DRIVERS[l_name].get_instance()
 
 	return None
 
