@@ -97,7 +97,7 @@ class Project:
 		l_file_path = os.path.abspath(p_file_path)
 
 		if not l_file_path.startswith(self.m_master_path):
-			logging.error("File isn't inside project base: " + l_file_path)
+			logging.error("File isn't inside project root: " + l_file_path)
 			return False
 
 		if not os.path.exists(l_file_path):
@@ -134,11 +134,11 @@ class Project:
 		l_new_path = os.path.abspath(p_new_path)
 
 		if not l_old_path.startswith(self.m_master_path):
-			logging.error("File isn't inside project base: " + l_old_path)
+			logging.error("File isn't inside project root: " + l_old_path)
 			return False
 
 		if not l_new_path.startswith(self.m_master_path):
-			logging.error("File isn't inside project base: " + l_new_path)
+			logging.error("File isn't inside project root: " + l_new_path)
 			return False
 
 		if not os.path.exists(l_old_path):
