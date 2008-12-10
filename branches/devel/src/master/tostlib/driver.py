@@ -1,5 +1,5 @@
 #==========================================================================
-# tostdk :: drivers :: driver.py
+# tostdk :: tostlib :: driver.py
 # Drivers wrapper
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz

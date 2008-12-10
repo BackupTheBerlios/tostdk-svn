@@ -1,5 +1,5 @@
 #==========================================================================
-# tostdk :: drivers :: files_driver.py
+# tostdk :: tostlib :: drivers :: files_driver.py
 # Test driver, using files for input / output
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz
