@@ -140,7 +140,7 @@ class CommandQueue ( singleton.Singleton ):
 	def __send ( self, p_driver ):
 	#----------------------------------------------------------------------
 
-		while p_driver.can_write():
+		while self.m_output_buffer and p_driver.can_write():
 			l_byte = self.m_output_buffer[0]
 
 			if not p_driver.write_byte(l_byte):
