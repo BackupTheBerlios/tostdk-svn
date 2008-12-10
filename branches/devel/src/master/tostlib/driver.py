@@ -38,6 +38,9 @@ DRIVERS = {
 class Driver:
 #==========================================================================
 
+	# NOTE: this is not a real singleton, this class isn't supposed
+	#       to be instantiated
+
 	s_instance = None
 
 	#----------------------------------------------------------------------
@@ -59,6 +62,13 @@ class Driver:
 			cls.s_instance = None
 
 		return cls.s_instance
+
+	#----------------------------------------------------------------------
+	@classmethod
+	def del_instance ( cls ):
+	#----------------------------------------------------------------------
+
+		cls.s_instance = None
 
 	#----------------------------------------------------------------------
 	def __init__ ( self ):
