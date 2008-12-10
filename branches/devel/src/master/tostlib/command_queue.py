@@ -67,10 +67,17 @@ class CommandQueue ( singleton.Singleton ):
 	def abort ( self ):
 	#----------------------------------------------------------------------
 
-		for l_command in self.m_queue:
-			l_command.abort_cb()
+		l_running = self.m_running
+		l_queue   = self.m_queue[:]
 
-		self.m_queue = []
+		self.m_running = None
+		self.m_queue   = []
+
+		if l_running:
+			l_running.abort_cb()
+
+		for l_command in l_queue:
+			l_command.abort_cb()
 
 	#----------------------------------------------------------------------
 	def process ( self ):
@@ -99,10 +106,12 @@ class CommandQueue ( singleton.Singleton ):
 			l_result = self.__decode()
 
 			if l_result != None:
-				self.m_running.m_status = command.FINISHED
-				self.m_running.m_result = l_result
-				self.m_running.finished_cb()
+				l_running = self.m_running
 				self.m_running = None
+
+				l_running.m_status = command.FINISHED
+				l_running.m_result = l_result
+				l_running.finished_cb()
 
 			else:
 				if not self.__receive(l_driver):
