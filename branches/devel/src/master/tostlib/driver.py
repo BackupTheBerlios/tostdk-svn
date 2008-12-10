@@ -1,6 +1,6 @@
 #==========================================================================
 # tostdk :: drivers :: driver.py
-# Base driver class
+# Drivers wrapper
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz
 #--------------------------------------------------------------------------
@@ -21,44 +21,50 @@
 #==========================================================================
 
 
-import singleton
+import logging
+import configuration
+
+import drivers.files_driver
 
 
 #==========================================================================
-class Driver ( singleton.Singleton ):
+DRIVERS = {
+#==========================================================================
+	'files_driver':		drivers.files_driver.FilesDriver
+}
+
+
+#==========================================================================
+class Driver:
 #==========================================================================
 
 	s_instance = None
 
 	#----------------------------------------------------------------------
+	@classmethod
+	def get_instance ( cls ):
+	#----------------------------------------------------------------------
+
+		l_configuration = configuration.Configuration.get_instance()
+		l_driver_name   = l_configuration.get_option_value('drivers', 'driver_name')
+
+		if DRIVERS.has_key(p_name):
+			l_class = DRIVERS[p_name]
+
+			if cls.s_instance == None or not isinstance(cls.s_instance, l_class):
+				cls.s_instance = l_class(l_configuration)
+
+		else:
+			logging.error("Can't find driver class: " + p_name)
+			cls.s_instance = None
+
+		return cls.s_instance
+
+	#----------------------------------------------------------------------
 	def __init__ ( self ):
 	#----------------------------------------------------------------------
 
-		singleton.Singleton.__init__(self)
-
-	#----------------------------------------------------------------------
-	def open ( self, l_configuration ):
-	#----------------------------------------------------------------------
-
-		raise NotImplementedError
-
-	#----------------------------------------------------------------------
-	def close ( self ):
-	#----------------------------------------------------------------------
-
-		raise NotImplementedError
-
-	#----------------------------------------------------------------------
-	def read ( self ):
-	#----------------------------------------------------------------------
-
-		raise NotImplementedError
-
-	#----------------------------------------------------------------------
-	def write ( self, p_data ):
-	#----------------------------------------------------------------------
-
-		raise NotImplementedError
+		raise RuntimeError
 
 
 #==========================================================================

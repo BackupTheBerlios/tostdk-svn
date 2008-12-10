@@ -23,40 +23,51 @@
 
 import os
 
-import tostlib.driver as driver
-
 
 #==========================================================================
-class FilesDriver ( driver.Driver ):
+class FilesDriver:
 #==========================================================================
 
 	#----------------------------------------------------------------------
-	def __init__ ( self ):
+	def __init__ ( self, p_configuration ):
 	#----------------------------------------------------------------------
 
-		driver.Driver.__init__(self)
+		self.m_input_path  = p_configuration.get_option_value('drivers', 'files_driver.input')
+		self.m_output_path = p_configuration.get_option_value('drivers', 'files_driver.output')
 
 		self.m_input_handle  = None
 		self.m_output_handle = None
 
 	#----------------------------------------------------------------------
+	def __del__ ( self ):
+	#----------------------------------------------------------------------
+
+		self.close()
+
+	#----------------------------------------------------------------------
 	def open ( self, l_configuration ):
 	#----------------------------------------------------------------------
 
-		l_input_path  = l_configuration.get_option_value('drivers', 'files_driver.input')
-		l_output_path = l_configuration.get_option_value('drivers', 'files_driver.output')
-
-		if not l_input_path or not l_output_path:
+		if not self.m_input_path or not self.m_output_path:
 			return False
+
+		if not os.path.exists(self.m_input_path):
+			try:
+				open(self.m_input_path, 'wb').close()
+			except:
+				return False
+
+		if not os.path.exists(self.m_output_path):
+			try:
+				open(self.m_output_path, 'wb').close()
+			except:
+				return False
 
 		try:
-			open(l_input_path,  'wb').close()
-			open(l_output_path, 'wb').close()
+			self.m_input_handle  = open(self.m_input_path,  'rb', 0)
+			self.m_output_handle = open(self.m_output_path, 'wb', 0)
 		except:
 			return False
-
-		self.m_input_handle  = open(l_input_path,  'rb', 0)
-		self.m_output_handle = open(l_output_path, 'wb', 0)
 
 		return True
 
@@ -64,25 +75,57 @@ class FilesDriver ( driver.Driver ):
 	def close ( self ):
 	#----------------------------------------------------------------------
 
+		l_ret = True
+
 		if self.m_input_handle != None:
-			self.m_input_handle.close()
+			try:
+				self.m_input_handle.close()
+			except:
+				l_ret = False
 
 		if self.m_output_handle != None:
-			self.m_output_handle.close()
+			try:
+				self.m_output_handle.close()
+			except:
+				l_ret = False
 
-		return True
+		self.m_input_handle  = None
+		self.m_output_handle = None
+
+		if os.path.exists(self.m_input_path):
+			try:
+				os.remove(self.m_input_path)
+			except:
+				l_ret = False
+
+		if os.path.exists(self.m_output_path):
+			try:
+				os.remove(self.m_output_path)
+			except:
+				l_ret = False
+
+		return l_ret
 
 	#----------------------------------------------------------------------
 	def read ( self ):
 	#----------------------------------------------------------------------
 
-		return self.m_input_handle.read()
+		try:
+			l_data = self.m_input_handle.read()
+		except:
+			l_data = None
+
+		return l_data
 
 	#----------------------------------------------------------------------
 	def write ( self, p_data ):
 	#----------------------------------------------------------------------
 
-		self.m_output_handle.write(p_data)
+		try:
+			self.m_output_handle.write(p_data)
+		except:
+			return False
+
 		return True
 
 
