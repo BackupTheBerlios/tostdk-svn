@@ -138,6 +138,15 @@ CONFIGURATION = {
 			'desc'   : "File driver output file",
 			'type'   : TYPE_VALID_STRING,
 			'default': "tostdk.output"
+		},
+
+		#------------------------------------------------------------------
+		'pipes_driver.command': {
+		#------------------------------------------------------------------
+			'level'  : LEVEL_USER,
+			'desc'   : "Command to execute",
+			'type'   : TYPE_VALID_STRING,
+			'default': ""
 		}
 	},
 

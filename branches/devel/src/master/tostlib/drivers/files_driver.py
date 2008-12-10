@@ -45,7 +45,7 @@ class FilesDriver:
 		self.close()
 
 	#----------------------------------------------------------------------
-	def open ( self, l_configuration ):
+	def open ( self ):
 	#----------------------------------------------------------------------
 
 		if not self.m_input_path or not self.m_output_path:
@@ -67,6 +67,8 @@ class FilesDriver:
 			self.m_input_handle  = open(self.m_input_path,  'rb', 0)
 			self.m_output_handle = open(self.m_output_path, 'wb', 0)
 		except:
+			self.m_input_handle  = None
+			self.m_output_handle = None
 			return False
 
 		return True
@@ -132,12 +134,6 @@ class FilesDriver:
 			return False
 
 		return True
-
-	#----------------------------------------------------------------------
-	def flush ( self ):
-	#----------------------------------------------------------------------
-
-		self.m_output_handle.flush()
 
 
 #==========================================================================

@@ -1,6 +1,6 @@
 #==========================================================================
-# tostdk :: tostlib :: driver.py
-# Drivers wrapper
+# tostdk :: tostlib :: drivers :: pipes_driver.py
+# Driver using piped command
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz
 #--------------------------------------------------------------------------
@@ -21,62 +21,86 @@
 #==========================================================================
 
 
-import logging
-import configuration
-
-import drivers.files_driver
-import drivers.pipes_driver
+import subprocess
 
 
 #==========================================================================
-DRIVERS = {
-#==========================================================================
-	'files_driver':		drivers.files_driver.FilesDriver,
-	'pipes_driver':		drivers.pipes_driver.PipesDriver
-}
-
-
-#==========================================================================
-class Driver:
+class PipesDriver:
 #==========================================================================
 
-	# NOTE: this is not a real singleton, this class isn't supposed
-	#       to be instantiated
-
-	s_instance = None
-
 	#----------------------------------------------------------------------
-	@classmethod
-	def get_instance ( cls ):
+	def __init__ ( self, p_configuration ):
 	#----------------------------------------------------------------------
 
-		l_configuration = configuration.Configuration.get_instance()
-		l_driver_name   = l_configuration.get_option_value('drivers', 'driver_name')
-
-		if DRIVERS.has_key(p_name):
-			l_class = DRIVERS[p_name]
-
-			if cls.s_instance == None or not isinstance(cls.s_instance, l_class):
-				cls.s_instance = l_class(l_configuration)
-
-		else:
-			logging.error("Can't find driver class: " + p_name)
-			cls.s_instance = None
-
-		return cls.s_instance
+		self.m_command = p_configuration.get_option_value('drivers', 'pipes_driver.command')
+		self.m_popen   = None
 
 	#----------------------------------------------------------------------
-	@classmethod
-	def del_instance ( cls ):
+	def __del__ ( self ):
 	#----------------------------------------------------------------------
 
-		cls.s_instance = None
+		self.close()
 
 	#----------------------------------------------------------------------
-	def __init__ ( self ):
+	def open ( self ):
 	#----------------------------------------------------------------------
 
-		raise RuntimeError
+		if not self.m_command:
+			return False
+
+		try:
+			self.m_popen = subprocess.Popen(self.m_command, bufsize=0,
+											stdin=subprocess.PIPE,
+											stdout=subprocess.PIPE,
+											close_fds=True)
+		except:
+			self.m_popen = None
+			return False
+
+		return True
+
+	#----------------------------------------------------------------------
+	def close ( self ):
+	#----------------------------------------------------------------------
+
+		l_ret = True
+
+		if self.m_popen:
+			try:
+				self.m_popen.wait()
+			except:
+				l_ret = False
+
+		self.m_popen = None
+
+		return l_ret
+
+	#----------------------------------------------------------------------
+	def can_read  ( self ): return (self.m_popen.pool() == None)
+	def can_write ( self ): return (self.m_popen.pool() == None)
+	#----------------------------------------------------------------------
+
+	#----------------------------------------------------------------------
+	def read_byte ( self ):
+	#----------------------------------------------------------------------
+
+		try:
+			l_byte = self.m_popen.stdout.read(1)
+		except:
+			l_byte = None
+
+		return l_byte
+
+	#----------------------------------------------------------------------
+	def write_byte ( self, p_byte ):
+	#----------------------------------------------------------------------
+
+		try:
+			self.m_popen.stdin.write(p_byte)
+		except:
+			return False
+
+		return True
 
 
 #==========================================================================
