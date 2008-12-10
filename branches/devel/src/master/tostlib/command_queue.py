@@ -1,6 +1,6 @@
 #==========================================================================
-# tostdk :: tostlib :: drivers :: files_driver.py
-# Test driver, using files for input / output
+# tostdk :: tostlib :: command_queue.py
+# Command queue class
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz
 #--------------------------------------------------------------------------
@@ -21,123 +21,148 @@
 #==========================================================================
 
 
-import os
+import struct
+
+import logging
+import singleton
+
+import result
+import command
+
+import driver
 
 
 #==========================================================================
-class FilesDriver:
+class CommandQueue ( singleton.Singleton ):
 #==========================================================================
 
-	#----------------------------------------------------------------------
-	def __init__ ( self, p_configuration ):
-	#----------------------------------------------------------------------
-
-		self.m_input_path  = p_configuration.get_option_value('drivers', 'files_driver.input')
-		self.m_output_path = p_configuration.get_option_value('drivers', 'files_driver.output')
-
-		self.m_input_handle  = None
-		self.m_output_handle = None
+	s_instance = None
 
 	#----------------------------------------------------------------------
-	def __del__ ( self ):
+	def __init__ ( self ):
 	#----------------------------------------------------------------------
 
-		self.close()
+		self.m_running = None
+		self.m_queue   = []
+
+		self.m_input_buffer  = ''
+		self.m_output_buffer = ''
 
 	#----------------------------------------------------------------------
-	def open ( self, l_configuration ):
+	def is_empty ( self ): return (not self.m_queue)
 	#----------------------------------------------------------------------
 
-		if not self.m_input_path or not self.m_output_path:
+	#----------------------------------------------------------------------
+	def append ( self, p_command ):
+	#----------------------------------------------------------------------
+
+		if not p_command.is_pending():
+			logging.error("Can't queue running or finished commands")
 			return False
 
-		if not os.path.exists(self.m_input_path):
-			try:
-				open(self.m_input_path, 'wb').close()
-			except:
+		self.m_queue.append(p_command)
+		return True
+
+	#----------------------------------------------------------------------
+	def abort ( self ):
+	#----------------------------------------------------------------------
+
+		for l_command in self.m_queue:
+			l_command.abort_cb()
+
+		self.m_queue = []
+
+	#----------------------------------------------------------------------
+	def process ( self ):
+	#----------------------------------------------------------------------
+
+		if not self.m_running:
+
+			if not self.m_queue:
+				return True
+
+			self.m_running = self.m_queue.pop(0)
+			self.__encode()
+
+			self.m_running.m_state = command.RUNNING
+			self.m_running.running_cb()
+
+		l_driver = driver.Driver.get_instance()
+
+		if self.m_output_buffer:
+			if not self.__send(l_driver):
+				logging.error("Can't send data to driver")
+				self.abort()
 				return False
 
-		if not os.path.exists(self.m_output_path):
-			try:
-				open(self.m_output_path, 'wb').close()
-			except:
-				return False
+		else:
+			l_result = self.__decode()
 
-		try:
-			self.m_input_handle  = open(self.m_input_path,  'rb', 0)
-			self.m_output_handle = open(self.m_output_path, 'wb', 0)
-		except:
-			return False
+			if l_result != None:
+				self.m_running.m_status = command.FINISHED
+				self.m_running.m_result = l_result
+				self.m_running.finished_cb()
+				self.m_running = None
+
+			else:
+				if not self.__receive(l_driver):
+					logging.error("Can't read data from driver")
+					self.abort()
+					return False
 
 		return True
 
 	#----------------------------------------------------------------------
-	def close ( self ):
+	def __encode ( self ):
 	#----------------------------------------------------------------------
 
-		l_ret = True
+		l_opcode = self.m_running.get_opcode()
+		l_data   = self.m_running.get_data()
 
-		if self.m_input_handle != None:
-			try:
-				self.m_input_handle.close()
-			except:
-				l_ret = False
-
-		if self.m_output_handle != None:
-			try:
-				self.m_output_handle.close()
-			except:
-				l_ret = False
-
-		self.m_input_handle  = None
-		self.m_output_handle = None
-
-		if os.path.exists(self.m_input_path):
-			try:
-				os.remove(self.m_input_path)
-			except:
-				l_ret = False
-
-		if os.path.exists(self.m_output_path):
-			try:
-				os.remove(self.m_output_path)
-			except:
-				l_ret = False
-
-		return l_ret
+		self.m_output_buffer = struct.pack('>BH', l_opcode, len(l_data)) + l_data
 
 	#----------------------------------------------------------------------
-	def can_read  ( self ): return True
-	def can_write ( self ): return True
+	def __decode ( self ):
 	#----------------------------------------------------------------------
 
+		if len(self.m_input_buffer) >= 3:
+			l_opcode, l_length = struct.unpack('>BH', self.m_input_buffer[:3])
+
+			if l_length and len(self.m_input_buffer) >= (l_length + 3):
+				l_data = self.m_input_buffer[3:l_length+3]
+				self.m_input_buffer = self.m_input_buffer[l_length+3:]
+
+				return result.Result(l_opcode, l_data)
+
+		return None
+
 	#----------------------------------------------------------------------
-	def read_byte ( self ):
+	def __send ( self, p_driver ):
 	#----------------------------------------------------------------------
 
-		try:
-			l_byte = self.m_input_handle.read(1)
-		except:
-			l_byte = None
+		while p_driver.can_write():
+			l_byte = self.m_output_buffer[0]
 
-		return l_byte
+			if not p_driver.write_byte(l_byte):
+				return False
 
-	#----------------------------------------------------------------------
-	def write_byte ( self, p_byte ):
-	#----------------------------------------------------------------------
-
-		try:
-			self.m_output_handle.write(p_byte)
-		except:
-			return False
+			self.m_output_buffer = self.m_output_buffer[1:]
 
 		return True
 
 	#----------------------------------------------------------------------
-	def flush ( self ):
+	def __receive ( self, p_driver ):
 	#----------------------------------------------------------------------
 
-		self.m_output_handle.flush()
+		while p_driver.can_read():
+			l_byte = p_driver.read_byte()
+
+			if l_byte == None:
+				return False
+
+			self.m_input_buffer += l_byte
+
+		return False
 
 
 #==========================================================================
