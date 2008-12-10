@@ -23,26 +23,25 @@
 
 import os
 
+from base_driver import BufferedReadDriver, BufferedWriteDriver
+
 
 #==========================================================================
-class FilesDriver:
+class FilesDriver ( BufferedReadDriver, BufferedWriteDriver ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
 	def __init__ ( self, p_configuration ):
 	#----------------------------------------------------------------------
 
+		BufferedReadDriver.__init__(self)
+		BufferedWriteDriver.__init__(self)
+
 		self.m_input_path  = p_configuration.get_option_value('drivers', 'files_driver.input')
 		self.m_output_path = p_configuration.get_option_value('drivers', 'files_driver.output')
 
 		self.m_input_handle  = None
 		self.m_output_handle = None
-
-	#----------------------------------------------------------------------
-	def __del__ ( self ):
-	#----------------------------------------------------------------------
-
-		self.close()
 
 	#----------------------------------------------------------------------
 	def open ( self ):
@@ -71,6 +70,8 @@ class FilesDriver:
 			self.m_output_handle = None
 			return False
 
+		BufferedReadDriver.open(self, self.m_input_handle)
+		BufferedWriteDriver.open(self, self.m_output_handle)
 		return True
 
 	#----------------------------------------------------------------------
@@ -78,6 +79,9 @@ class FilesDriver:
 	#----------------------------------------------------------------------
 
 		l_ret = True
+
+		BufferedReadDriver.close(self)
+		BufferedWriteDriver.close(self)
 
 		if self.m_input_handle != None:
 			try:
@@ -107,33 +111,6 @@ class FilesDriver:
 				l_ret = False
 
 		return l_ret
-
-	#----------------------------------------------------------------------
-	def can_read  ( self ): return True
-	def can_write ( self ): return True
-	#----------------------------------------------------------------------
-
-	#----------------------------------------------------------------------
-	def read_byte ( self ):
-	#----------------------------------------------------------------------
-
-		try:
-			l_byte = self.m_input_handle.read(1)
-		except:
-			l_byte = None
-
-		return l_byte
-
-	#----------------------------------------------------------------------
-	def write_byte ( self, p_byte ):
-	#----------------------------------------------------------------------
-
-		try:
-			self.m_output_handle.write(p_byte)
-		except:
-			return False
-
-		return True
 
 
 #==========================================================================

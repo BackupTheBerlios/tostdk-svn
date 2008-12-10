@@ -134,12 +134,14 @@ class CommandQueue ( singleton.Singleton ):
 	def __decode ( self ):
 	#----------------------------------------------------------------------
 
-		if len(self.m_input_buffer) >= 3:
-			l_opcode, l_length = struct.unpack('>BH', self.m_input_buffer[:3])
+		l_buffer_length = len(self.m_input_buffer)
 
-			if l_length and len(self.m_input_buffer) >= (l_length + 3):
-				l_data = self.m_input_buffer[3:l_length+3]
-				self.m_input_buffer = self.m_input_buffer[l_length+3:]
+		if l_buffer_length >= 3:
+			l_opcode, l_packet_length = struct.unpack('>BH', self.m_input_buffer[:3])
+
+			if l_buffer_length == (l_packet_length + 3):
+				l_data = self.m_input_buffer[3:]
+				self.m_input_buffer = ''
 
 				return result.Result(l_opcode, l_data)
 
@@ -171,7 +173,7 @@ class CommandQueue ( singleton.Singleton ):
 
 			self.m_input_buffer += l_byte
 
-		return False
+		return True
 
 
 #==========================================================================
