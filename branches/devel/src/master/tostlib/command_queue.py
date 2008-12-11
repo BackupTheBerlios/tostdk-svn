@@ -21,16 +21,14 @@
 #==========================================================================
 
 
+import time
 import struct
 
 import logging
 import singleton
-
 import result
 import command
-
 import driver
-import drivers.packet
 
 
 #==========================================================================
@@ -43,8 +41,11 @@ class CommandQueue ( singleton.Singleton ):
 	def __init__ ( self ):
 	#----------------------------------------------------------------------
 
-		self.m_running = None
 		self.m_queue   = []
+
+		self.m_running = None
+		self.m_time    = 0.0
+		self.m_timeout = 0.0
 
 		self.m_input_buffer  = ''
 		self.m_output_buffer = ''
@@ -86,10 +87,11 @@ class CommandQueue ( singleton.Singleton ):
 		self.m_queue   = []
 
 		if l_running:
-			l_running.abort_cb()
+			l_running.m_state = command.ABORTED
+			l_running.aborted_cb()
 
 		for l_command in l_queue:
-			l_command.abort_cb()
+			l_command.aborted_cb()
 
 		self.m_input_buffer  = ''
 		self.m_output_buffer = ''
@@ -104,10 +106,13 @@ class CommandQueue ( singleton.Singleton ):
 				return True
 
 			self.m_running = self.m_queue.pop(0)
-			self.m_output_buffer = self.m_running.pack()
 
 			self.m_running.m_state = command.RUNNING
 			self.m_running.running_cb()
+
+			self.m_time = time.time()
+			self.m_timeout = self.m_running.get_timeout()
+			self.m_output_buffer = self.m_running.pack()
 
 		l_driver = driver.Driver.get_instance()
 
@@ -135,6 +140,19 @@ class CommandQueue ( singleton.Singleton ):
 					logging.error("Can't receive data from driver")
 					self.abort()
 					return False
+
+		if self.m_running and self.m_timeout > 0.0:
+			if (time.time() - self.m_time) > self.m_timeout:
+				logging.error("Timeout!")
+
+				l_running = self.m_running
+				self.m_running = None
+
+				l_running.m_status = command.TIMEOUT
+				l_running.timeout_cb()
+
+				self.abort()
+				return False
 
 		return True
 

@@ -28,6 +28,8 @@ import packet
 PENDING  = 0
 RUNNING  = 1
 FINISHED = 2
+ABORTED  = 3
+TIMEOUT  = 4
 #==========================================================================
 
 
@@ -36,13 +38,14 @@ class Command ( packet.Packet ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
-	def __init__ ( self, p_opcode, p_data = '' ):
+	def __init__ ( self, p_opcode, p_data = '', p_timeout = 0.0 ):
 	#----------------------------------------------------------------------
 
 		packet.Packet.__init__(self, p_opcode, p_data)
 
-		self.m_status = PENDING
-		self.m_result = None
+		self.m_status  = PENDING
+		self.m_result  = None
+		self.m_timeout = p_timeout
 
 	#----------------------------------------------------------------------
 	def is_pending  ( self ): return (self.m_status == PENDING)
@@ -56,9 +59,14 @@ class Command ( packet.Packet ):
 	#----------------------------------------------------------------------
 
 	#----------------------------------------------------------------------
+	def get_timeout ( self ): return self.m_timeout
+	#----------------------------------------------------------------------
+
+	#----------------------------------------------------------------------
 	def running_cb  ( self ): pass
 	def finished_cb ( self ): pass
-	def abort_cb    ( self ): pass
+	def aborted_cb  ( self ): pass
+	def timeout_cb  ( self ): pass
 	#----------------------------------------------------------------------
 
 
