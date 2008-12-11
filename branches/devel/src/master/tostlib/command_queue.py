@@ -91,6 +91,9 @@ class CommandQueue ( singleton.Singleton ):
 		for l_command in l_queue:
 			l_command.abort_cb()
 
+		self.m_input_buffer  = ''
+		self.m_output_buffer = ''
+
 	#----------------------------------------------------------------------
 	def process ( self ):
 	#----------------------------------------------------------------------
@@ -151,8 +154,9 @@ class CommandQueue ( singleton.Singleton ):
 		if l_unpack == None:
 			return None
 
-		l_opcode, l_data = l_unpack
+		self.m_input_buffer = ''
 
+		l_opcode, l_data = l_unpack
 		return result.Result(l_opcode, l_data)
 
 	#----------------------------------------------------------------------
