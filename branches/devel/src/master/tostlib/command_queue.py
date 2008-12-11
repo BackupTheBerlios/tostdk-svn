@@ -30,6 +30,7 @@ import result
 import command
 
 import driver
+import drivers.packet
 
 
 #==========================================================================
@@ -51,6 +52,17 @@ class CommandQueue ( singleton.Singleton ):
 	#----------------------------------------------------------------------
 	def is_empty ( self ): return (not self.m_queue)
 	#----------------------------------------------------------------------
+
+	#----------------------------------------------------------------------
+	def insert ( self, p_command ):
+	#----------------------------------------------------------------------
+
+		if not p_command.is_pending():
+			logging.error("Can't queue running or finished commands")
+			return False
+
+		self.m_queue.insert(0, p_command)
+		return True
 
 	#----------------------------------------------------------------------
 	def append ( self, p_command ):
@@ -115,7 +127,7 @@ class CommandQueue ( singleton.Singleton ):
 
 			else:
 				if not self.__receive(l_driver):
-					logging.error("Can't read data from driver")
+					logging.error("Can't receive data from driver")
 					self.abort()
 					return False
 
@@ -128,24 +140,20 @@ class CommandQueue ( singleton.Singleton ):
 		l_opcode = self.m_running.get_opcode()
 		l_data   = self.m_running.get_data()
 
-		self.m_output_buffer = struct.pack('>BH', l_opcode, len(l_data)) + l_data
+		self.m_output_buffer = drivers.packet.pack(l_opcode, l_data)
 
 	#----------------------------------------------------------------------
 	def __decode ( self ):
 	#----------------------------------------------------------------------
 
-		l_buffer_length = len(self.m_input_buffer)
+		l_unpack = drivers.packet.unpack(self.m_input_buffer)
 
-		if l_buffer_length >= 3:
-			l_opcode, l_packet_length = struct.unpack('>BH', self.m_input_buffer[:3])
+		if l_unpack == None:
+			return None
 
-			if l_buffer_length == (l_packet_length + 3):
-				l_data = self.m_input_buffer[3:]
-				self.m_input_buffer = ''
+		l_opcode, l_data = l_unpack
 
-				return result.Result(l_opcode, l_data)
-
-		return None
+		return result.Result(l_opcode, l_data)
 
 	#----------------------------------------------------------------------
 	def __send ( self, p_driver ):
