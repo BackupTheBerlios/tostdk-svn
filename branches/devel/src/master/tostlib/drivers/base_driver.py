@@ -21,7 +21,7 @@
 #==========================================================================
 
 
-import struct
+import packet
 
 
 #==========================================================================
@@ -128,7 +128,7 @@ class BufferedReadDriver:
 
 		self.m_read_buffer += l_read
 
-		return bool(self.m_read_buffer)
+		return packet.is_valid(self.m_read_buffer)
 
 	#----------------------------------------------------------------------
 	def read_byte ( self ):
@@ -171,7 +171,7 @@ class BufferedWriteDriver:
 	def can_write ( self ):
 	#----------------------------------------------------------------------
 
-		return not self.__has_packet()
+		return not packet.is_valid(self.m_write_buffer)
 
 	#----------------------------------------------------------------------
 	def write_byte ( self, p_byte ):
@@ -179,7 +179,7 @@ class BufferedWriteDriver:
 
 		self.m_write_buffer += p_byte
 
-		if self.__has_packet():
+		if packet.is_valid(self.m_write_buffer):
 			try:
 				self.m_write_handle.write(self.m_write_buffer)
 			except:
@@ -188,19 +188,6 @@ class BufferedWriteDriver:
 			self.m_write_buffer = ''
 
 		return True
-
-	#----------------------------------------------------------------------
-	def __has_packet ( self ):
-	#----------------------------------------------------------------------
-
-		l_buffer_length = len(self.m_write_buffer)
-
-		if l_buffer_length < 3:
-			return False
-
-		l_opcode, l_packet_length = struct.unpack('>BH', self.m_write_buffer[:3])
-
-		return (l_buffer_length == (l_packet_length + 3))
 
 
 #==========================================================================
