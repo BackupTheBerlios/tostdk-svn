@@ -104,7 +104,7 @@ class CommandQueue ( singleton.Singleton ):
 				return True
 
 			self.m_running = self.m_queue.pop(0)
-			self.__encode()
+			self.m_output_buffer = self.m_running.pack()
 
 			self.m_running.m_state = command.RUNNING
 			self.m_running.running_cb()
@@ -118,9 +118,11 @@ class CommandQueue ( singleton.Singleton ):
 				return False
 
 		else:
-			l_result = self.__decode()
+			l_result = result.Result.unpack(self.m_input_buffer)
 
 			if l_result != None:
+				self.m_input_buffer = ''
+
 				l_running = self.m_running
 				self.m_running = None
 
@@ -135,29 +137,6 @@ class CommandQueue ( singleton.Singleton ):
 					return False
 
 		return True
-
-	#----------------------------------------------------------------------
-	def __encode ( self ):
-	#----------------------------------------------------------------------
-
-		l_opcode = self.m_running.get_opcode()
-		l_data   = self.m_running.get_data()
-
-		self.m_output_buffer = drivers.packet.pack(l_opcode, l_data)
-
-	#----------------------------------------------------------------------
-	def __decode ( self ):
-	#----------------------------------------------------------------------
-
-		l_unpack = drivers.packet.unpack(self.m_input_buffer)
-
-		if l_unpack == None:
-			return None
-
-		self.m_input_buffer = ''
-
-		l_opcode, l_data = l_unpack
-		return result.Result(l_opcode, l_data)
 
 	#----------------------------------------------------------------------
 	def __send ( self, p_driver ):
