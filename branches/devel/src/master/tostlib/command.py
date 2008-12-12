@@ -47,6 +47,11 @@ class Command ( packet.Packet ):
 		self.m_result  = None
 		self.m_timeout = p_timeout
 
+		self.m_running_cb  = None
+		self.m_finished_cb = None
+		self.m_aborted_cb  = None
+		self.m_timeout_cb  = None
+
 	#----------------------------------------------------------------------
 	def is_pending  ( self ): return (self.m_status == PENDING)
 	def is_running  ( self ): return (self.m_status == RUNNING)
@@ -63,11 +68,39 @@ class Command ( packet.Packet ):
 	#----------------------------------------------------------------------
 
 	#----------------------------------------------------------------------
-	def running_cb  ( self ): pass
-	def finished_cb ( self ): pass
-	def aborted_cb  ( self ): pass
-	def timeout_cb  ( self ): pass
+	def set_running_cb  ( self, p_func ): self.m_running_cb  = p_func
+	def set_finished_cb ( self, p_func ): self.m_finished_cb = p_func
+	def set_aborted_cb  ( self, p_func ): self.m_aborted_cb  = p_func
+	def set_timeout_cb  ( self, p_func ): self.m_timeout_cb  = p_func
 	#----------------------------------------------------------------------
+
+	#----------------------------------------------------------------------
+	def running_cb  ( self ):
+	#----------------------------------------------------------------------
+
+		if self.m_running_cb:
+			self.m_running_cb(self)
+
+	#----------------------------------------------------------------------
+	def finished_cb ( self ):
+	#----------------------------------------------------------------------
+
+		if self.m_finished_cb:
+			self.m_finisehd_cb(self)
+
+	#----------------------------------------------------------------------
+	def aborted_cb  ( self ):
+	#----------------------------------------------------------------------
+
+		if self.m_aborted_cb:
+			self.m_aborted_cb(self)
+
+	#----------------------------------------------------------------------
+	def timeout_cb  ( self ):
+	#----------------------------------------------------------------------
+
+		if self.m_timeout_cb:
+			self.m_timeout_cb(self)
 
 
 #==========================================================================
