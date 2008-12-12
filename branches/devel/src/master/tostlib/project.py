@@ -20,17 +20,18 @@
 # along with Tostdk.  If not, see <http://www.gnu.org/licenses/>.
 #==========================================================================
 
+
 import os
 import sys
 
 import logging
 import configuration
+import cache
+
 
 #==========================================================================
 class Project:
 #==========================================================================
-
-	s_instance = None
 
 	#----------------------------------------------------------------------
 	def __init__ ( self, p_master_path ):
@@ -40,10 +41,38 @@ class Project:
 
 	#----------------------------------------------------------------------
 	@classmethod
+	def find_project_root ( cls, p_path ):
+	#----------------------------------------------------------------------
+
+		l_config = configuration.Configuration.get_instance()
+
+		if not l_config.load():
+			return None
+
+		l_project_dir = l_config.get_option_value('general', 'project_dir')
+		l_path = os.path.abspath(p_path)
+
+		while l_path:
+			l_project_path = os.path.join(l_path, l_project_dir)
+
+			if os.path.exists(l_project_path):
+				break
+
+			l_parent = os.path.dirname(l_path)
+
+			if l_parent == l_path:
+				l_path = ''
+			else:
+				l_path = l_parent
+
+		return l_path
+
+	#----------------------------------------------------------------------
+	@classmethod
 	def open ( cls, p_master_path ):
 	#----------------------------------------------------------------------
 
-		l_master_path = os.path.abspath(p_master_path)
+		l_master_path = cls.find_project_root(p_master_path)
 
 		l_config = configuration.Configuration.get_instance()
 
