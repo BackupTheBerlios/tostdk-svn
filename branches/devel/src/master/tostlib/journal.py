@@ -93,20 +93,28 @@ class Journal:
 	def add_entry ( self, p_command, p_args ):
 	#----------------------------------------------------------------------
 
+		if not self.__save_journal():
+			return False
+
 		l_guid  = self.__guid(p_command, p_args)
 		l_entry = JournalEntry(l_guid, p_command, p_args)
 
 		self.m_entries.append(l_entry)
-		return True
+
+		return self.__save_journal()
 
 	#----------------------------------------------------------------------
 	def remove_entry ( self, p_guid ):
 	#----------------------------------------------------------------------
 
+		if not self.__save_journal():
+			return False
+
 		for l_entry in self.m_entries:
 			if l_entry.get_guid() == p_guid:
+
 				self.m_entries.remove(l_entry)
-				return True
+				return self.__save_journal()
 
 		logging.error("Invalid guid: ", p_guid)
 		return False

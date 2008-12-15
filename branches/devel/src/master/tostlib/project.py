@@ -164,9 +164,10 @@ class Project:
 			logging.error("File doesn't exists: ", l_file_path)
 			return False
 
-		#TODO: write action
+		l_command = 'add'
+		l_args    = [p_file_path]
 
-		return False
+		return self.m_journal.add_entry(l_command, l_args)
 
 	#----------------------------------------------------------------------
 	def remove_file ( self, p_file_path ):
@@ -182,9 +183,10 @@ class Project:
 			logging.error("File doesn't exists: ", l_file_path)
 			return False
 
-		#TODO: write action
+		l_command = 'remove'
+		l_args    = [p_file_path]
 
-		return False
+		return self.m_journal.add_entry(l_command, l_args)
 
 	#----------------------------------------------------------------------
 	def rename_file ( self, p_old_path, p_new_path ):
@@ -209,9 +211,26 @@ class Project:
 			logging.error("File already exists: ", l_new_path)
 			return False
 
-		#TODO: write action
+		l_command = 'rename'
+		l_args    = [p_old_path, p_new_path]
 
-		return False
+		return self.m_journal.add_entry(l_command, l_args)
+
+	#----------------------------------------------------------------------
+	def update_cached_files ( self ):
+	#----------------------------------------------------------------------
+
+		l_outdated = self.m_cache.get_outdated_entries()
+
+		for l_file_path in l_outdated:
+
+			l_command = 'update'
+			l_args    = [l_file_path]
+
+			if not self.m_journal.add_entry(l_command, l_args):
+				return False
+
+		return True
 
 
 #==========================================================================
