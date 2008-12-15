@@ -228,7 +228,7 @@ class Project:
 			l_args    = [l_file_path]
 
 			if not self.m_journal.add_entry(l_command, l_args):
-				return False
+				continue
 
 		return True
 

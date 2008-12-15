@@ -22,7 +22,6 @@
 
 
 import os
-import time
 import hashlib
 
 import logging
@@ -84,8 +83,6 @@ class Journal:
 		self.m_project_path = p_project_path
 		self.m_entries      = []
 
-		self.m_hash = hashlib.md5()
-
 		if not self.__load_journal():
 			logging.error("Can't initialize journal")
 
@@ -97,6 +94,12 @@ class Journal:
 			return False
 
 		l_guid  = self.__guid(p_command, p_args)
+
+		for l_entry in self.m_entries:
+			if l_entry.get_guid() == l_guid:
+				logging.warning("Entry already exists in journal")
+				return False
+
 		l_entry = JournalEntry(l_guid, p_command, p_args)
 
 		self.m_entries.append(l_entry)
@@ -132,9 +135,10 @@ class Journal:
 	def __guid ( self, p_command, p_args ):
 	#----------------------------------------------------------------------
 
-		l_string = time.asctime() + p_command + ''.join(p_args)
-		self.m_hash.update(l_string)
-		return self.m_hash.hexdigest()
+		l_string = p_command + ''.join(p_args)
+		l_md5    = hashlib.md5()
+		l_md5.update(l_string)
+		return l_md5.hexdigest()
 
 	#----------------------------------------------------------------------
 	def __load_journal ( self ):
