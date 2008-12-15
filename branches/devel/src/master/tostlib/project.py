@@ -316,7 +316,8 @@ class Project:
 	def __master_path ( self, p_file_path ):
 	#----------------------------------------------------------------------
 
-		l_path = p_file_path[len(self.m_master_path)+len(os.sep):]
+		l_start = os.path.commonprefix([self.m_master_path, p_file_path])
+		l_path  = p_file_path[len(l_start):]
 		return l_path
 
 
