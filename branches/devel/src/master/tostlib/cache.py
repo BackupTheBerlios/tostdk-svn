@@ -129,12 +129,12 @@ class Cache:
 			del self.m_entries[l_key]
 
 	#----------------------------------------------------------------------
-	def add_entry ( self, p_file_path ):
+	def add_entry ( self, p_file_path, p_simulate = False ):
 	#----------------------------------------------------------------------
 
 		if self.has_entry(p_file_path):
 			logging.warning("Already in cache: " + p_file_path)
-			return True
+			return False
 
 		if not self.__save_db():
 			return False
@@ -144,6 +144,9 @@ class Cache:
 		if not os.path.exists(l_file_path):
 			logging.error("Can't find file: " + l_file_path)
 			return False
+
+		if p_simulate:
+			return True
 
 		l_id  = self.__id(p_file_path)
 		l_md5 = self.__md5(p_file_path)
@@ -165,15 +168,18 @@ class Cache:
 		return self.__save_db()
 
 	#----------------------------------------------------------------------
-	def remove_entry ( self, p_file_path, p_force = False ):
+	def remove_entry ( self, p_file_path, p_force = False, p_simulate = False ):
 	#----------------------------------------------------------------------
 
 		if not self.has_entry(p_file_path):
 			logging.warning("Not in cache: " + p_file_path)
-			return True
+			return False
 
 		if not self.__save_db():
 			return False
+
+		if p_simulate:
+			return True
 
 		l_cache_path = self.__cache_path(p_file_path)
 
@@ -189,7 +195,7 @@ class Cache:
 		return self.__save_db()
 
 	#----------------------------------------------------------------------
-	def rename_entry ( self, p_old_path, p_new_path ):
+	def rename_entry ( self, p_old_path, p_new_path, p_simulate = False ):
 	#----------------------------------------------------------------------
 
 		if not self.has_entry(p_old_path):
@@ -202,6 +208,9 @@ class Cache:
 
 		if not self.__save_db():
 			return False
+
+		if p_simulate:
+			return True
 
 		l_id  = self.__id(p_new_path)
 		l_md5 = self.get_entry(p_old_path).get_md5()
@@ -223,12 +232,12 @@ class Cache:
 		return self.__save_db()
 
 	#----------------------------------------------------------------------
-	def update_entry ( self, p_file_path ):
+	def update_entry ( self, p_file_path, p_simulate = False ):
 	#----------------------------------------------------------------------
 
 		if not self.has_entry(p_file_path):
 			logging.warning("Not in cache: " + p_file_path)
-			return True
+			return False
 
 		if not self.__save_db():
 			return False
@@ -243,6 +252,9 @@ class Cache:
 
 		if l_md5 == None:
 			return False
+
+		if p_simulate:
+			return True
 
 		l_cache_path = self.__cache_path(p_file_path)
 

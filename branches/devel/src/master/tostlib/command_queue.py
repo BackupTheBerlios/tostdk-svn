@@ -80,6 +80,8 @@ class CommandQueue ( singleton.Singleton ):
 	def abort ( self ):
 	#----------------------------------------------------------------------
 
+		logging.message("Aborting command queue")
+
 		l_running = self.m_running
 		l_queue   = self.m_queue[:]
 
@@ -103,7 +105,7 @@ class CommandQueue ( singleton.Singleton ):
 		if not self.m_running:
 
 			if not self.m_queue:
-				return True
+				return False
 
 			self.m_running = self.m_queue.pop(0)
 
@@ -133,7 +135,9 @@ class CommandQueue ( singleton.Singleton ):
 
 				l_running.m_status = command.FINISHED
 				l_running.m_result = l_result
-				l_running.finished_cb()
+				if not l_running.finished_cb():
+					self.abort()
+					return False
 
 			else:
 				if not self.__receive(l_driver):

@@ -87,6 +87,33 @@ class Journal:
 			logging.error("Can't initialize journal")
 
 	#----------------------------------------------------------------------
+	def has_entry ( self, p_command, p_args ):
+	#----------------------------------------------------------------------
+
+		l_guid = self.__guid(p_command, p_args)
+
+		return self.__has_entry(l_guid)
+
+	#----------------------------------------------------------------------
+	def get_top_entry ( self ):
+	#----------------------------------------------------------------------
+
+		if self.m_entries:
+			return self.m_entries[0]
+
+		return None
+
+	#----------------------------------------------------------------------
+	def get_entry ( self, p_guid ):
+	#----------------------------------------------------------------------
+
+		for l_entry in self.m_entries:
+			if l_entry.get_guid() == p_guid:
+				return l_entry
+
+		return None
+
+	#----------------------------------------------------------------------
 	def add_entry ( self, p_command, p_args ):
 	#----------------------------------------------------------------------
 
@@ -95,10 +122,9 @@ class Journal:
 
 		l_guid  = self.__guid(p_command, p_args)
 
-		for l_entry in self.m_entries:
-			if l_entry.get_guid() == l_guid:
-				logging.warning("Entry already exists in journal")
-				return False
+		for self.__has_entry(l_guid):
+			logging.warning("Entry already exists in journal")
+			return False
 
 		l_entry = JournalEntry(l_guid, p_command, p_args)
 
@@ -123,13 +149,14 @@ class Journal:
 		return False
 
 	#----------------------------------------------------------------------
-	def get_top_entry ( self ):
+	def __has_entry ( self, p_guid ):
 	#----------------------------------------------------------------------
 
-		if self.m_entries:
-			return self.m_entries[0]
+		for l_entry in self.m_entries:
+			if l_entry.get_guid() == p_guid:
+				return True
 
-		return None
+		return False
 
 	#----------------------------------------------------------------------
 	def __guid ( self, p_command, p_args ):

@@ -164,8 +164,16 @@ class Project:
 			logging.error("File doesn't exists: ", l_file_path)
 			return False
 
+		l_file_path = self.__master_path(l_file_path)
+
+		if not self.m_cache.add_entry(l_file_path, p_simulate=True):
+			return False
+
 		l_command = 'add'
-		l_args    = [p_file_path]
+		l_args    = [l_file_path]
+
+		if self.m_journal.has_entry(l_command, l_args):
+			return True
 
 		return self.m_journal.add_entry(l_command, l_args)
 
@@ -183,8 +191,16 @@ class Project:
 			logging.error("File doesn't exists: ", l_file_path)
 			return False
 
+		l_file_path = self.__master_path(l_file_path)
+
+		if not self.m_cache.remove_entry(l_file_path, p_simulate=True):
+			return False
+
 		l_command = 'remove'
-		l_args    = [p_file_path]
+		l_args    = [l_file_path]
+
+		if self.m_journal.has_entry(l_command, l_args):
+			return True
 
 		return self.m_journal.add_entry(l_command, l_args)
 
@@ -211,8 +227,17 @@ class Project:
 			logging.error("File already exists: ", l_new_path)
 			return False
 
+		l_old_path = self.__master_path(l_old_path)
+		l_new_path = self.__master_path(l_new_path)
+
+		if not self.m_cache.rename_entry(l_old_path, l_new_path, p_simulate=True):
+			return False
+
 		l_command = 'rename'
-		l_args    = [p_old_path, p_new_path]
+		l_args    = [l_old_path, l_new_path]
+
+		if self.m_journal.has_entry(l_command, l_args):
+			return True
 
 		return self.m_journal.add_entry(l_command, l_args)
 
@@ -227,10 +252,72 @@ class Project:
 			l_command = 'update'
 			l_args    = [l_file_path]
 
-			if not self.m_journal.add_entry(l_command, l_args):
+			if self.m_journal.has_entry(l_command, l_args):
 				continue
 
+			if not self.m_cache.update_entry(l_file_path, p_simulate=True):
+				return False
+
+			if not self.m_journal.add_entry(l_command, l_args):
+				return False
+
 		return True
+
+	#----------------------------------------------------------------------
+	def finished_cb ( self, p_command ):
+	#----------------------------------------------------------------------
+
+		if not p_command.has_result():
+			logging.error("Command has no result")
+			return False
+
+		if p_command.get_result().is_error():
+			logging.error("A result occured while processing the command.")
+			return False
+
+		if p_command.has_guid():
+			l_guid = p_command.get_guid()
+			l_journal_entry = self.m_journal.get_entry(l_guid)
+
+			if not l_entry:
+				logging.error("Entry not found in journal: " + l_guid)
+				return False
+
+			l_command = p_command.get_command()
+			l_args    = p_command.get_args()
+
+			if l_command == 'add':
+				if not self.m_cache.add_entry(l_args[0]):
+					logging.error("Can't update cache entry: " + l_args[0])
+					return False
+
+			elif l_command == 'remove':
+				if not self.m_cache.remove_entry(l_args[0]):
+					logging.error("Can't update cache entry: " + l_args[0])
+					return False
+
+			elif l_command == 'rename':
+				if not self.m_cache.rename_entry(l_args[0], l_args[1]):
+					logging.error("Can't update cache entry: " + l_args[0])
+					return False
+
+			elif l_command == 'update':
+				if not self.m_cache.update_entry(l_args[0]):
+					logging.error("Can't update cache entry: " + l_args[0])
+					return False
+
+			if not self.m_journal.remove_entry(l_guid):
+				logging.error("Can't remove entry from journal: " + l_guid)
+				return False
+
+		return True
+
+	#----------------------------------------------------------------------
+	def __master_path ( self, p_file_path ):
+	#----------------------------------------------------------------------
+
+		l_path = p_file_path[len(self.m_master_path)+len(os.sep):]
+		return l_path
 
 
 #==========================================================================

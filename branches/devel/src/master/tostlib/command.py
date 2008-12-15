@@ -47,6 +47,8 @@ class Command ( packet.Packet ):
 		self.m_result  = None
 		self.m_timeout = p_timeout
 
+		self.m_guid = None
+
 		self.m_running_cb  = None
 		self.m_finished_cb = None
 		self.m_aborted_cb  = None
@@ -66,6 +68,13 @@ class Command ( packet.Packet ):
 	#----------------------------------------------------------------------
 	def get_timeout ( self ): return self.m_timeout
 	#----------------------------------------------------------------------
+
+	#----------------------------------------------------------------------
+	def has_guid ( self ): return bool(self.m_guid)
+	def get_guid ( self ); return self.m_guid
+	def set_guid ( self, p_guid ): self.m_guid = p_guid
+	#----------------------------------------------------------------------
+
 
 	#----------------------------------------------------------------------
 	def set_running_cb  ( self, p_func ): self.m_running_cb  = p_func
