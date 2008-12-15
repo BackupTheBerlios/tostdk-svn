@@ -80,13 +80,15 @@ class Cache:
 #==========================================================================
 
 	#----------------------------------------------------------------------
-	def __init__ ( self, p_project_path, p_cache_path ):
+	def __init__ ( self, p_master_path, p_cache_path ):
 	#----------------------------------------------------------------------
 
-		self.m_project_path = p_project_path
-		self.m_cache_path   = p_cache_path
-		self.m_entries      = {}
-		self.__load_db()
+		self.m_master_path = p_master_path
+		self.m_cache_path  = p_cache_path
+		self.m_entries     = {}
+
+		if not self.__load_db():
+			logging.error("Can't initialize cache")
 
 	#----------------------------------------------------------------------
 	def entries_iterator ( self ):
@@ -137,7 +139,7 @@ class Cache:
 		if not self.__save_db():
 			return False
 
-		l_file_path = os.path.join(self.m_project_path, p_file_path)
+		l_file_path = os.path.join(self.m_master_path, p_file_path)
 
 		if not os.path.exists(l_file_path):
 			logging.error("Can't find file: " + l_file_path)
@@ -231,7 +233,7 @@ class Cache:
 		if not self.__save_db():
 			return False
 
-		l_file_path = os.path.join(self.m_project_path, p_file_path)
+		l_file_path = os.path.join(self.m_master_path, p_file_path)
 
 		if not os.path.exists(l_file_path):
 			logging.error("Can't find file: " + l_file_path)
@@ -262,7 +264,7 @@ class Cache:
 			logging.error("Not in cache: " + p_file_path)
 			return None
 
-		l_file_path = os.path.join(self.m_project_path, p_file_path)
+		l_file_path = os.path.join(self.m_master_path, p_file_path)
 		if not os.path.exists(l_file_path):
 			logging.error("Can't find file: " + l_file_path)
 			return None
@@ -306,7 +308,7 @@ class Cache:
 			logging.error("Can't read file: " + l_cache_path)
 			return None
 
-		l_file_path  = os.path.join(self.m_project_path, p_file_path)
+		l_file_path  = os.path.join(self.m_master_path, p_file_path)
 
 		try:
 			l_handle = open(l_file_path, 'rb')
@@ -334,9 +336,15 @@ class Cache:
 	def __load_db ( self ):
 	#----------------------------------------------------------------------
 
-		l_db_path = os.path.join(self.m_cache_path, 'cache.db')
+		l_db_path = os.path.join(self.m_cache_path, 'cache')
 
 		self.m_entries = {}
+
+		if not os.path.exists(l_db_path):
+			if os.path.exists(self.m_cache_path):
+				return True
+			logging.error("No cache found: " + self.m_cache_path)
+			return False
 
 		try:
 			l_handle = open(l_db_path, 'rU')
@@ -360,7 +368,7 @@ class Cache:
 	def __save_db ( self ):
 	#----------------------------------------------------------------------
 
-		l_db_path = os.path.join(self.m_cache_path, 'cache.db')
+		l_db_path = os.path.join(self.m_cache_path, 'cache')
 
 		l_lines = ''
 
@@ -390,7 +398,7 @@ class Cache:
 	def __md5 ( self, p_file_path ):
 	#----------------------------------------------------------------------
 
-		l_file_path = os.path.join(self.m_project_path, p_file_path)
+		l_file_path = os.path.join(self.m_master_path, p_file_path)
 
 		try:
 			l_handle = open(l_file_path, 'rb')

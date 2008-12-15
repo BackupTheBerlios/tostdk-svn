@@ -27,6 +27,7 @@ import sys
 import logging
 import configuration
 import cache
+import journal
 
 
 #==========================================================================
@@ -34,10 +35,35 @@ class Project:
 #==========================================================================
 
 	#----------------------------------------------------------------------
-	def __init__ ( self, p_master_path ):
+	def __init__ ( self, p_master_path, p_slave_path ):
 	#----------------------------------------------------------------------
 
-		self.m_master_path = p_master_path
+		l_config      = configuration.Configuration.get_instance()
+		l_project_dir = l_config.get_option_value('general', 'project_dir')
+
+		self.m_master_path  = os.path.abspath(p_master_path)
+		self.m_slave_path   = p_slave_path
+
+		self.m_project_path = os.path.join(self.m_master_path, l_project_dir)
+		self.m_cache_path   = os.path.join(self.m_project_path, 'cache')
+
+		self.m_cache   = cache.Cache(self.m_master_path, self.m_cache_path)
+		self.m_journal = journal.Journal(self.m_project_path)
+
+	#----------------------------------------------------------------------
+	def get_master_path ( self ): return self.m_master_path
+	def get_slave_path  ( self ): return self.m_slave_path
+	#----------------------------------------------------------------------
+
+	#----------------------------------------------------------------------
+	def get_project_path ( self ): return self.m_project_path
+	def get_cache_path   ( self ): return self.m_cache_path
+	#----------------------------------------------------------------------
+
+	#----------------------------------------------------------------------
+	def get_cache   ( self ): return self.m_cache
+	def get_journal ( self ): return self.m_journal
+	#----------------------------------------------------------------------
 
 	#----------------------------------------------------------------------
 	@classmethod
@@ -79,7 +105,12 @@ class Project:
 		if not l_config.load(l_master_path):
 			return None
 
-		return cls(l_master_path)
+		l_slave_path = l_config.get_option_value('project', 'slave_path')
+
+		if l_slave_path == None:
+			return None
+
+		return cls(l_master_path, l_slave_path)
 
 	#----------------------------------------------------------------------
 	@classmethod
@@ -117,7 +148,7 @@ class Project:
 		if not l_config.save(l_master_path):
 			return None
 
-		return cls(l_master_path)
+		return cls(l_master_path, p_slave_path)
 
 	#----------------------------------------------------------------------
 	def add_file ( self, p_file_path ):
