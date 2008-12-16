@@ -153,10 +153,9 @@ class CommandQueue ( singleton.Singleton ):
 				self.m_running = None
 
 				l_running.m_status = command.TIMEOUT
-				l_running.timeout_cb()
-
-				self.abort()
-				return False
+				if not l_running.timeout_cb():
+					self.abort()
+					return False
 
 		return True
 

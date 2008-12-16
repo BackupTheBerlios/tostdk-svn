@@ -28,6 +28,7 @@ import logging
 import configuration
 import cache
 import journal
+import command_queue
 
 
 #==========================================================================
@@ -178,6 +179,18 @@ class Project:
 		return self.m_journal.add_entry(l_command, l_args)
 
 	#----------------------------------------------------------------------
+	def __post_add ( self, p_command, p_journal_entry ):
+	#----------------------------------------------------------------------
+
+		l_args = p_journal_entry.get_args()
+
+		if not self.m_cache.add_entry(l_args[0]):
+			logging.error("Can't update cache entry: " + l_args[0])
+			return False
+
+		return True
+
+	#----------------------------------------------------------------------
 	def remove_file ( self, p_file_path ):
 	#----------------------------------------------------------------------
 
@@ -203,6 +216,18 @@ class Project:
 			return True
 
 		return self.m_journal.add_entry(l_command, l_args)
+
+	#----------------------------------------------------------------------
+	def __post_remove ( self, p_command, p_journal_entry ):
+	#----------------------------------------------------------------------
+
+		l_args = p_journal_entry.get_args()
+
+		if not self.m_cache.remove_entry(l_args[0]):
+			logging.error("Can't update cache entry: " + l_args[0])
+			return False
+
+		return True
 
 	#----------------------------------------------------------------------
 	def rename_file ( self, p_old_path, p_new_path ):
@@ -242,6 +267,18 @@ class Project:
 		return self.m_journal.add_entry(l_command, l_args)
 
 	#----------------------------------------------------------------------
+	def __post_rename ( self, p_command, p_journal_entry ):
+	#----------------------------------------------------------------------
+
+		l_args = p_journal_entry.get_args()
+
+		if not self.m_cache.rename_entry(l_args[0], l_args[1]):
+			logging.error("Can't update cache entry: " + l_args[0])
+			return False
+
+		return True
+
+	#----------------------------------------------------------------------
 	def update_cached_files ( self ):
 	#----------------------------------------------------------------------
 
@@ -264,6 +301,47 @@ class Project:
 		return True
 
 	#----------------------------------------------------------------------
+	def __post_update ( self, p_command, p_journal_entry ):
+	#----------------------------------------------------------------------
+
+		l_args = p_journal_entry.get_args()
+
+		if not self.m_cache.update_entry(l_args[0]):
+			logging.error("Can't update cache entry: " + l_args[0])
+			return False
+
+		return True
+
+	#----------------------------------------------------------------------
+	def running_cb  ( self, p_command ):
+	#----------------------------------------------------------------------
+
+		l_string = self.__command_string(p_command)
+
+		if l_string:
+			logging.message("Running command: " + l_string)
+
+	#----------------------------------------------------------------------
+	def aborted_cb  ( self, p_command ):
+	#----------------------------------------------------------------------
+
+		l_string = self.__command_string(p_command)
+
+		if l_string:
+			logging.message("Aborting command: " + l_string)
+
+	#----------------------------------------------------------------------
+	def timeout_cb  ( self, p_command ):
+	#----------------------------------------------------------------------
+
+		l_string = self.__command_string(p_command)
+
+		if l_string:
+			logging.message("Command timeout: " + l_string)
+
+		self.__post_error(p_command)
+
+	#----------------------------------------------------------------------
 	def finished_cb ( self, p_command ):
 	#----------------------------------------------------------------------
 
@@ -272,45 +350,78 @@ class Project:
 			return False
 
 		if p_command.get_result().is_error():
-			logging.error("A result occured while processing the command.")
-			return False
+			return self.__post_error(p_command)
 
-		if p_command.has_guid():
-			l_guid = p_command.get_guid()
-			l_journal_entry = self.m_journal.get_entry(l_guid)
+		l_journal_entry = self.__journal_entry(p_command)
 
-			if not l_entry:
-				logging.error("Entry not found in journal: " + l_guid)
-				return False
-
-			l_command = p_command.get_command()
-			l_args    = p_command.get_args()
+		if l_journal_entry:
+			l_command = l_journal_entry.get_command()
 
 			if l_command == 'add':
-				if not self.m_cache.add_entry(l_args[0]):
-					logging.error("Can't update cache entry: " + l_args[0])
+				if not self.__post_add(p_command, l_journal_entry):
 					return False
 
 			elif l_command == 'remove':
-				if not self.m_cache.remove_entry(l_args[0]):
-					logging.error("Can't update cache entry: " + l_args[0])
+				if not self.__post_remove(p_command, l_journal_entry):
 					return False
 
 			elif l_command == 'rename':
-				if not self.m_cache.rename_entry(l_args[0], l_args[1]):
-					logging.error("Can't update cache entry: " + l_args[0])
+				if not self.__post_rename(p_command, l_journal_entry):
 					return False
 
 			elif l_command == 'update':
-				if not self.m_cache.update_entry(l_args[0]):
-					logging.error("Can't update cache entry: " + l_args[0])
+				if not self.__post_update(p_command, l_journal_entry):
 					return False
 
+			l_guid = l_journal_entry.get_guid()
 			if not self.m_journal.remove_entry(l_guid):
 				logging.error("Can't remove entry from journal: " + l_guid)
 				return False
 
 		return True
+
+	#----------------------------------------------------------------------
+	def __post_error ( self, p_command ):
+	#----------------------------------------------------------------------
+
+		if not p_command.has_guid():
+			p_command.cleanup()
+			return command_queue.CommandQueue.get_instance().insert(p_command)
+
+		l_string = self.__command_string(p_command)
+
+		if l_string:
+			logging.message("Command failed: " + l_string)
+
+		return False
+
+	#----------------------------------------------------------------------
+	def __journal_entry ( self, p_command ):
+	#----------------------------------------------------------------------
+
+		if p_command.has_guid():
+			l_guid = p_command.get_guid()
+			l_journal_entry = self.m_journal.get_entry(l_guid)
+
+			if not l_journal_entry:
+				logging.error("No journal entry: " + l_guid)
+
+			return l_journal_entry
+
+		return None
+
+	#----------------------------------------------------------------------
+	def __command_string ( self, p_command ):
+	#----------------------------------------------------------------------
+
+		l_journal_entry = self.__journal_entry(p_command)
+
+		if l_journal_entry:
+			l_command = l_journal_entry.get_command()
+			l_args    = l_journal_entry.get_args()
+			return ' '.join([l_command] + l_args)
+
+		return None
 
 	#----------------------------------------------------------------------
 	def __master_path ( self, p_file_path ):

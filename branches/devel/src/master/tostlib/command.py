@@ -38,7 +38,7 @@ class Command ( packet.Packet ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
-	def __init__ ( self, p_opcode, p_data = '', p_timeout = 0.0 ):
+	def __init__ ( self, p_opcode, p_data = '', p_timeout = 0.0, p_guid = None ):
 	#----------------------------------------------------------------------
 
 		packet.Packet.__init__(self, p_opcode, p_data)
@@ -47,12 +47,20 @@ class Command ( packet.Packet ):
 		self.m_result  = None
 		self.m_timeout = p_timeout
 
-		self.m_guid = None
+		self.m_guid = p_guid
 
 		self.m_running_cb  = None
 		self.m_finished_cb = None
 		self.m_aborted_cb  = None
 		self.m_timeout_cb  = None
+		self.m_finished_cb = None
+
+	#----------------------------------------------------------------------
+	def cleanup ( self ):
+	#----------------------------------------------------------------------
+
+		self.m_status = PENDING
+		self.m_result = None
 
 	#----------------------------------------------------------------------
 	def is_pending  ( self ): return (self.m_status == PENDING)
@@ -66,22 +74,38 @@ class Command ( packet.Packet ):
 	#----------------------------------------------------------------------
 
 	#----------------------------------------------------------------------
+	def has_timeout ( self ): return (self.m_timeout > 0.0)
 	def get_timeout ( self ): return self.m_timeout
 	#----------------------------------------------------------------------
 
 	#----------------------------------------------------------------------
 	def has_guid ( self ): return bool(self.m_guid)
-	def get_guid ( self ); return self.m_guid
-	def set_guid ( self, p_guid ): self.m_guid = p_guid
+	def get_guid ( self ): return self.m_guid
 	#----------------------------------------------------------------------
 
 
 	#----------------------------------------------------------------------
 	def set_running_cb  ( self, p_func ): self.m_running_cb  = p_func
-	def set_finished_cb ( self, p_func ): self.m_finished_cb = p_func
 	def set_aborted_cb  ( self, p_func ): self.m_aborted_cb  = p_func
 	def set_timeout_cb  ( self, p_func ): self.m_timeout_cb  = p_func
+	def set_finished_cb ( self, p_func ): self.m_finished_cb = p_func
 	#----------------------------------------------------------------------
+
+	#----------------------------------------------------------------------
+	def set_callbacks ( self, p_callbacks ):
+	#----------------------------------------------------------------------
+
+		if p_callbacks.has_key('running'):
+			self.m_running_cb  = p_callbacks['running']
+
+		if p_callbacks.has_key('aborted'):
+			self.m_aborted_cb  = p_callbacks['aborted']
+
+		if p_callbacks.has_key('timeout'):
+			self.m_timeout_cb  = p_callbacks['timeout']
+
+		if p_callbacks.has_key('finished'):
+			self.m_finished_cb = p_callbacks['finished']
 
 	#----------------------------------------------------------------------
 	def running_cb  ( self ):
@@ -89,13 +113,6 @@ class Command ( packet.Packet ):
 
 		if self.m_running_cb:
 			self.m_running_cb(self)
-
-	#----------------------------------------------------------------------
-	def finished_cb ( self ):
-	#----------------------------------------------------------------------
-
-		if self.m_finished_cb:
-			self.m_finisehd_cb(self)
 
 	#----------------------------------------------------------------------
 	def aborted_cb  ( self ):
@@ -109,7 +126,16 @@ class Command ( packet.Packet ):
 	#----------------------------------------------------------------------
 
 		if self.m_timeout_cb:
-			self.m_timeout_cb(self)
+			return self.m_timeout_cb(self)
+		return False
+
+	#----------------------------------------------------------------------
+	def finished_cb ( self ):
+	#----------------------------------------------------------------------
+
+		if self.m_finished_cb:
+			return self.m_finisehd_cb(self)
+		return True
 
 
 #==========================================================================
