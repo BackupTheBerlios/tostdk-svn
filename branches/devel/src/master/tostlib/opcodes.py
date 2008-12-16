@@ -31,23 +31,23 @@ COMMANDS = (
 #--------------------------------------------------------------------------
 	'PING',			# ''
 
-	'CHROOT',		# 'str(pathname)\0'
-	'CHDIR',		# 'str(pathname)\0'
-	'MKDIR',		# 'str(pathname)\0'
-	'MV',			# 'str(source_filename)\0str(dest_filename)\0'
-	'RM',			# 'str(filename)\0'
+	'CHROOT',		# 'str(pathname)'
+	'CHDIR',		# 'str(pathname)'
+	'MKDIR',		# 'str(pathname)'
+	'MV',			# 'str(source_filename),str(dest_filename)'
+	'RM',			# 'str(filename)'
 
-	'MALLOC',		# 'short(memslot),int(size)'
-	'FREE',			# 'short(memslot)'
-	'MEMMOVE',		# 'short(memslot),int(source_offset),int(dest_offset),int(size)'
-	'DOWNLOAD',		# 'short(memslot),int(offset),int(size)' + data
+	'MALLOC',		# 'int(size)'
+	'FREE',			# ''
+	'MEMMOVE',		# 'int(source_offset),int(dest_offset),int(size)'
+	'DOWNLOAD',		# 'int(offset),int(size),data'
 
-	'OPEN',			# 'short(fileslot),str(filename)\0'
-	'CREATE',		# 'short(fileslot),str(filename)\0'
-	'SEEK',			# 'short(fileslot),int(offset)'
-	'READ',			# 'short(fileslot),short(memslot),int(offset),int(size)'
-	'WRITE',		# 'short(fileslot),short(memslot),int(offset),int(size)'
-	'CLOSE',		# 'short(fileslot)
+	'OPEN',			# 'str(filename)'
+	'CREATE',		# 'str(filename)'
+	'SEEK',			# 'int(offset)'
+	'READ',			# 'int(offset),int(size)'
+	'WRITE',		# 'int(offset),int(size)'
+	'CLOSE',		# ''
 )
 
 #--------------------------------------------------------------------------
