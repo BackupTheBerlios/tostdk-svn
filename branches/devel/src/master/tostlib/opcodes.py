@@ -77,10 +77,15 @@ def command_string ( p_opcode ):
 
 
 #--------------------------------------------------------------------------
-RESULTS = (
+RESULTS_OK = (
 #--------------------------------------------------------------------------
+	'PONG',					# ''
 	'OK',					# ''
+)
 
+#--------------------------------------------------------------------------
+RESULTS_ERROR = (
+#--------------------------------------------------------------------------
 	'INVALID_PATHNAME',		# 'str(pathname)\0'
 	'INVALID_FILENAME',		# 'str(pathname)\0'
 	'NOT_ENOUGH_MEMORY',	# 'short(memslot)'
@@ -95,8 +100,10 @@ def result_opcode ( p_string ):
 
 	l_result = p_string.upper()
 
-	if l_result in RESULTS:
-		return  RESULTS.index(l_result)
+	if l_result in RESULTS_OK:
+		return  RESULTS_OK.index(l_result)
+	elif l_result in RESULTS_ERROR:
+		return RESULTS_ERROR.index(l_result) + 128
 
 	return None
 
@@ -104,10 +111,24 @@ def result_opcode ( p_string ):
 def result_string ( p_opcode ):
 #--------------------------------------------------------------------------
 
-	if p_opcode < len(RESULTS):
-		return RESULTS[p_opcode]
+	if p_opcode < 128 and p_opcode < len(RESULTS_OK):
+		return RESULTS_OK[p_opcode]
+	elif p_opcode > 127 and (p_opcode - 128) < len(RESULTS_ERROR):
+		return RESULTS_ERROR[p_opcode - 128]
 
 	return None
+
+#--------------------------------------------------------------------------
+def is_ok_result ( p_opcode ):
+#--------------------------------------------------------------------------
+
+	return (p_opcode < 128)
+
+#--------------------------------------------------------------------------
+def is_error_result ( p_opcode ):
+#--------------------------------------------------------------------------
+
+	return (p_opcode > 127)
 
 
 #==========================================================================
