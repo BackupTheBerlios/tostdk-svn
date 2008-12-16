@@ -27,7 +27,6 @@ import hashlib
 import difflib
 
 import logging
-import configuration
 
 
 #==========================================================================

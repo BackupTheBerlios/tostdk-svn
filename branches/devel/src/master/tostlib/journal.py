@@ -25,7 +25,6 @@ import os
 import hashlib
 
 import logging
-import configuration
 
 
 #==========================================================================

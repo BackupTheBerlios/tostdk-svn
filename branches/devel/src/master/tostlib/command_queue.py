@@ -26,8 +26,8 @@ import struct
 
 import logging
 import singleton
-import result
 import command
+import result
 import driver
 
 

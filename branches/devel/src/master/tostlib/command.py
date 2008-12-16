@@ -50,7 +50,6 @@ class Command ( packet.Packet ):
 		self.m_guid = p_guid
 
 		self.m_running_cb  = None
-		self.m_finished_cb = None
 		self.m_aborted_cb  = None
 		self.m_timeout_cb  = None
 		self.m_finished_cb = None
