@@ -1,5 +1,5 @@
 #==========================================================================
-# tostdk :: tostlib :: command_queue.py
+# tostdk :: tostlib :: queue.py
 # Command queue manager
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz
@@ -32,7 +32,7 @@ import driver
 
 
 #==========================================================================
-class CommandQueue ( singleton.Singleton ):
+class Queue ( singleton.Singleton ):
 #==========================================================================
 
 	s_instance = None
