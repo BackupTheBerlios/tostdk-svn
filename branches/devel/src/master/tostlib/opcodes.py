@@ -21,34 +21,89 @@
 #==========================================================================
 
 
+#--------------------------------------------------------------------------
+COMMANDS = (
+#--------------------------------------------------------------------------
+	'PING',							# ping
+	'CHROOT',						# select project root
+	'MKDIR',						# create new directories
+	'MV',							# rename a file
+	'RM',							# remove a file
+	'MALLOC',						# allocate memory
+	'FREE',							# free allocated memory
+	'MEMMOVE',						# move memory within allocated memory
+	'DOWNLOAD',						# download data inside allocated memory
+	'OPEN',							# open a file for reading
+	'CREATE',						# create a file for writing
+	'SEEK',							# move current opened file absolute pointer
+	'READ',							# read data from current file to allocated memory
+	'WRITE',						# write data from allocated memory to current file
+	'CLOSE',						# close current file
+)
+
+#--------------------------------------------------------------------------
+COMMANDS_FMT = (
+#--------------------------------------------------------------------------
+	'PING'		: '',				#
+	'CHROOT'	: 'S',				# pathname
+	'MKDIR'		: 'S',				# pathname
+	'MV'		: 'SS',				# source_filename,dest_filename
+	'RM'		: 'S',				# filename
+	'MALLOC'	: 'I',				# size
+	'FREE'		: '',				#
+	'MEMMOVE'	: 'III',			# source_offset,dest_offset,size
+	'DOWNLOAD'	: 'IID',			# offset,size,data
+	'OPEN'		: 'S',				# filename
+	'CREATE'	: 'S',				# filename
+	'SEEK'		: 'I',				# offset
+	'READ'		: 'II',				# offset,size
+	'WRITE'		: 'II',				# offset,size
+	'CLOSE'		: '',				#
+)
+
+#--------------------------------------------------------------------------
+RESULTS_OK = (
+#--------------------------------------------------------------------------
+	'PONG',							# pong
+	'OK',							# no error
+)
+
+#--------------------------------------------------------------------------
+RESULTS_OK_FMT = (
+#--------------------------------------------------------------------------
+	'PONG'		: '',				#
+	'OK'		: '',				#
+)
+
+#--------------------------------------------------------------------------
+RESULTS_ERROR = (
+#--------------------------------------------------------------------------
+	'CHROOT_ERROR',					#
+	'CHDIR_ERROR',					#
+	'CREATEDIR_ERROR',				#
+	'OPENFILE_ERROR',				#
+	'CREATEFILE_ERROR',				#
+	'FILEIO_ERROR',					#
+	'OUTOFMEMORY_ERROR',			#
+)
+
+#--------------------------------------------------------------------------
+RESULTS_ERROR_FMT = (
+#--------------------------------------------------------------------------
+	'CHROOT_ERROR'		: 'S',		# pathname
+	'CHDIR_ERROR'		: 'S',		# pathname
+	'CREATEDIR_ERROR'	: 'S',		# pathname
+	'OPENFILE_ERROR'	: 'S',		# filename
+	'CREATEFILE_ERROR'	: 'S',		# filename
+	'FILEIO_ERROR'		: 'S',		# filename
+	'OUTOFMEMORY_ERROR'	: '',		#
+)
+
+
 #==========================================================================
 # Commands
 #==========================================================================
 
-
-#--------------------------------------------------------------------------
-COMMANDS = (
-#--------------------------------------------------------------------------
-	'PING',			# ''
-
-	'CHROOT',		# 'str(pathname)'
-	'CHDIR',		# 'str(pathname)'
-	'MKDIR',		# 'str(pathname)'
-	'MV',			# 'str(source_filename),str(dest_filename)'
-	'RM',			# 'str(filename)'
-
-	'MALLOC',		# 'int(size)'
-	'FREE',			# ''
-	'MEMMOVE',		# 'int(source_offset),int(dest_offset),int(size)'
-	'DOWNLOAD',		# 'int(offset),int(size),data'
-
-	'OPEN',			# 'str(filename)'
-	'CREATE',		# 'str(filename)'
-	'SEEK',			# 'int(offset)'
-	'READ',			# 'int(offset),int(size)'
-	'WRITE',		# 'int(offset),int(size)'
-	'CLOSE',		# ''
-)
 
 #--------------------------------------------------------------------------
 def command_opcode ( p_string ):
@@ -75,24 +130,6 @@ def command_string ( p_opcode ):
 # Results
 #==========================================================================
 
-
-#--------------------------------------------------------------------------
-RESULTS_OK = (
-#--------------------------------------------------------------------------
-	'PONG',					# ''
-	'OK',					# ''
-)
-
-#--------------------------------------------------------------------------
-RESULTS_ERROR = (
-#--------------------------------------------------------------------------
-	'INVALID_PATHNAME',		# 'str(pathname)\0'
-	'INVALID_FILENAME',		# 'str(pathname)\0'
-	'NOT_ENOUGH_MEMORY',	# 'short(memslot)'
-	'INVALID_BUFFER',		# 'short(memslot)'
-	'INVALID_FILE',			# 'short(fileslot)'
-	'FILE_IO_ERROR',		# 'short(fileslot)'
-)
 
 #--------------------------------------------------------------------------
 def result_opcode ( p_string ):
