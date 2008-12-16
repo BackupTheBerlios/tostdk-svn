@@ -28,7 +28,7 @@ import logging
 import configuration
 import cache
 import journal
-import command_queue
+import queue
 
 
 #==========================================================================
