@@ -35,6 +35,7 @@ COMMANDS = (
 	'FREE'		: '',				#
 	'MEMMOVE'	: 'III',			# source_offset,dest_offset,size
 	'DOWNLOAD'	: 'IHD',			# offset,size,data
+	'UNPACK'	: 'II',				# source_offset,dest_offset
 	'OPEN'		: 'S',				# filename
 	'CREATE'	: 'S',				# filename
 	'SEEK'		: 'I',				# offset
