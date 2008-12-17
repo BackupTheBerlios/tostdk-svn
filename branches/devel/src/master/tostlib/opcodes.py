@@ -21,38 +21,20 @@
 #==========================================================================
 
 
+# see data.py for formats specifications
+
+
 #--------------------------------------------------------------------------
 COMMANDS = (
 #--------------------------------------------------------------------------
-	'PING',							# ping
-	'CHROOT',						# select project root
-	'MKDIR',						# create new directories
-	'MV',							# rename a file
-	'RM',							# remove a file
-	'MALLOC',						# allocate memory
-	'FREE',							# free allocated memory
-	'MEMMOVE',						# move memory within allocated memory
-	'DOWNLOAD',						# download data inside allocated memory
-	'OPEN',							# open a file for reading
-	'CREATE',						# create a file for writing
-	'SEEK',							# move current opened file absolute pointer
-	'READ',							# read data from current file to allocated memory
-	'WRITE',						# write data from allocated memory to current file
-	'CLOSE',						# close current file
-)
-
-#--------------------------------------------------------------------------
-COMMANDS_FMT = (
-#--------------------------------------------------------------------------
 	'PING'		: '',				#
 	'CHROOT'	: 'S',				# pathname
-	'MKDIR'		: 'S',				# pathname
 	'MV'		: 'SS',				# source_filename,dest_filename
 	'RM'		: 'S',				# filename
 	'MALLOC'	: 'I',				# size
 	'FREE'		: '',				#
 	'MEMMOVE'	: 'III',			# source_offset,dest_offset,size
-	'DOWNLOAD'	: 'IID',			# offset,size,data
+	'DOWNLOAD'	: 'IHD',			# offset,size,data
 	'OPEN'		: 'S',				# filename
 	'CREATE'	: 'S',				# filename
 	'SEEK'		: 'I',				# offset
@@ -64,39 +46,20 @@ COMMANDS_FMT = (
 #--------------------------------------------------------------------------
 RESULTS_OK = (
 #--------------------------------------------------------------------------
-	'PONG',							# pong
-	'OK',							# no error
-)
-
-#--------------------------------------------------------------------------
-RESULTS_OK_FMT = (
-#--------------------------------------------------------------------------
 	'PONG'		: '',				#
 	'OK'		: '',				#
 )
 
 #--------------------------------------------------------------------------
-RESULTS_ERROR = (
+RESULTS_SPLIT = 128
 #--------------------------------------------------------------------------
-	'CHROOT_ERROR',					#
-	'CHDIR_ERROR',					#
-	'CREATEDIR_ERROR',				#
-	'OPENFILE_ERROR',				#
-	'CREATEFILE_ERROR',				#
-	'FILEIO_ERROR',					#
-	'OUTOFMEMORY_ERROR',			#
-)
 
 #--------------------------------------------------------------------------
-RESULTS_ERROR_FMT = (
+RESULTS_ERROR = (
 #--------------------------------------------------------------------------
-	'CHROOT_ERROR'		: 'S',		# pathname
-	'CHDIR_ERROR'		: 'S',		# pathname
-	'CREATEDIR_ERROR'	: 'S',		# pathname
-	'OPENFILE_ERROR'	: 'S',		# filename
-	'CREATEFILE_ERROR'	: 'S',		# filename
-	'FILEIO_ERROR'		: 'S',		# filename
-	'OUTOFMEMORY_ERROR'	: '',		#
+	'FILENOTFOUND'		: 'S',		# filename
+	'FILEIO'			: 'S',		# filename
+	'OUTOFMEMORY'		: 'I',		# biggest block available
 )
 
 
@@ -106,22 +69,33 @@ RESULTS_ERROR_FMT = (
 
 
 #--------------------------------------------------------------------------
-def command_opcode ( p_string ):
+def command_opcode ( p_name ):
 #--------------------------------------------------------------------------
 
-	l_command = p_string.upper()
+	l_name = p_name.upper()
 
-	if l_command in COMMANDS:
-		return  COMMANDS.index(l_command)
+	if COMMANDS.has_key(l_name):
+		return sorted(COMMANDS.keys()).index(l_name)
 
 	return None
 
 #--------------------------------------------------------------------------
-def command_string ( p_opcode ):
+def command_name ( p_opcode ):
 #--------------------------------------------------------------------------
 
-	if p_opcode < len(COMMANDS):
-		return COMMANDS[p_opcode]
+	if p_opcode < len(COMMANDS.keys()):
+		return sorted(COMMANDS.keys())[p_opcode]
+
+	return None
+
+#--------------------------------------------------------------------------
+def command_format ( p_name ):
+#--------------------------------------------------------------------------
+
+	l_name = p_name.upper()
+
+	if COMMANDS.has_key(l_name):
+		return COMMANDS[l_name]
 
 	return None
 
@@ -132,26 +106,44 @@ def command_string ( p_opcode ):
 
 
 #--------------------------------------------------------------------------
-def result_opcode ( p_string ):
+def result_opcode ( p_name ):
 #--------------------------------------------------------------------------
 
-	l_result = p_string.upper()
+	l_name = p_name.upper()
 
-	if l_result in RESULTS_OK:
-		return  RESULTS_OK.index(l_result)
-	elif l_result in RESULTS_ERROR:
-		return RESULTS_ERROR.index(l_result) + 128
+	if RESULTS_OK.has_key(l_name):
+		return sorted(RESULTS_OK.keys()).index(l_name)
+
+	elif RESULTS_ERROR.has_key(l_name):
+		return sorted(RESULTS_ERROR.keys()).index(l_name) + RESULTS_SPLIT
 
 	return None
 
 #--------------------------------------------------------------------------
-def result_string ( p_opcode ):
+def result_name ( p_opcode ):
 #--------------------------------------------------------------------------
 
-	if p_opcode < 128 and p_opcode < len(RESULTS_OK):
-		return RESULTS_OK[p_opcode]
-	elif p_opcode > 127 and (p_opcode - 128) < len(RESULTS_ERROR):
-		return RESULTS_ERROR[p_opcode - 128]
+	if p_opcode < RESULTS_SPLIT and \
+			p_opcode < len(RESULTS_OK.keys()):
+		return sorted(RESULTS_OK.keys())[p_opcode]
+
+	elif p_opcode >= RESULTS_SPLIT and \
+			(p_opcode - RESULTS_SPLIT) < len(RESULTS_ERROR.keys()):
+		return sorted(RESULTS_ERROR.keys())[p_opcode - RESULTS_SPLIT]
+
+	return None
+
+#--------------------------------------------------------------------------
+def result_format ( p_name ):
+#--------------------------------------------------------------------------
+
+	l_name = p_name.upper()
+
+	if RESULTS_OK.has_key(l_name):
+		return RESULTS_OK[l_name]
+
+	elif RESULTS_ERROR.has_key(l_name):
+		return RESULTS_ERROR[l_name]
 
 	return None
 
@@ -159,13 +151,13 @@ def result_string ( p_opcode ):
 def is_ok_result ( p_opcode ):
 #--------------------------------------------------------------------------
 
-	return (p_opcode < 128)
+	return (p_opcode < RESULTS_SPLIT)
 
 #--------------------------------------------------------------------------
 def is_error_result ( p_opcode ):
 #--------------------------------------------------------------------------
 
-	return (p_opcode > 127)
+	return (p_opcode >= RESULTS_SPLIT)
 
 
 #==========================================================================
