@@ -22,6 +22,8 @@
 
 
 import packet
+import opcodes
+import data
 
 
 #==========================================================================
@@ -38,16 +40,16 @@ class Command ( packet.Packet ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
-	def __init__ ( self, p_opcode, p_data = '', p_timeout = 0.0, p_guid = None ):
+	def __init__ ( self, p_opcode, p_data ):
 	#----------------------------------------------------------------------
 
 		packet.Packet.__init__(self, p_opcode, p_data)
 
-		self.m_status  = PENDING
-		self.m_result  = None
-		self.m_timeout = p_timeout
+		self.m_status = PENDING
+		self.m_result = None
 
-		self.m_guid = p_guid
+		self.m_timeout = 0.0
+		self.m_guid    = None
 
 		self.m_running_cb  = None
 		self.m_aborted_cb  = None
@@ -60,6 +62,29 @@ class Command ( packet.Packet ):
 
 		self.m_status = PENDING
 		self.m_result = None
+
+	#----------------------------------------------------------------------
+	@classmethod
+	def create ( cls, p_name, p_args, p_timeout = 0.0, p_guid = None ):
+	#----------------------------------------------------------------------
+
+		l_opcode = opcodes.command_opcode(p_name)
+		l_format = opcodes.command_format(p_name)
+
+		if l_opcode == None or l_format == None:
+			return None
+
+		l_data = data.pack(l_format, p_args)
+
+		if l_data == None:
+			return None
+
+		l_command = cls(l_opcode, l_data)
+
+		l_command.set_timeout(p_timeout)
+		l_command.set_guid(p_guid)
+
+		return l_command
 
 	#----------------------------------------------------------------------
 	def is_pending  ( self ): return (self.m_status == PENDING)
@@ -75,13 +100,53 @@ class Command ( packet.Packet ):
 	#----------------------------------------------------------------------
 	def has_timeout ( self ): return (self.m_timeout > 0.0)
 	def get_timeout ( self ): return self.m_timeout
+	def set_timout  ( self, p_timeout ): self.m_timeout = p_timeout
 	#----------------------------------------------------------------------
 
 	#----------------------------------------------------------------------
 	def has_guid ( self ): return bool(self.m_guid)
 	def get_guid ( self ): return self.m_guid
+	def set_guid ( self, p_guid ): self.m_guid = p_guid
 	#----------------------------------------------------------------------
 
+	#----------------------------------------------------------------------
+	def get_name ( self ):
+	#----------------------------------------------------------------------
+
+		return opcodes.command_name(self.get_opcode())
+
+	#----------------------------------------------------------------------
+	def get_format ( self ):
+	#----------------------------------------------------------------------
+
+		l_name = self.get_name()
+
+		if l_name == None:
+			return None
+
+		return opcodes.command_format(l_name)
+
+	#----------------------------------------------------------------------
+	def get_args ( self ):
+	#----------------------------------------------------------------------
+
+		l_format = self.get_format()
+
+		if l_format == None:
+			return None
+
+		return data.unpack(l_format, self.get_data())
+
+	#----------------------------------------------------------------------
+	def get_args_readable ( self ):
+	#----------------------------------------------------------------------
+
+		l_format = self.get_format()
+
+		if l_format == None:
+			return None
+
+		return data.unpack_readable(l_format, self.get_data())
 
 	#----------------------------------------------------------------------
 	def set_running_cb  ( self, p_func ): self.m_running_cb  = p_func

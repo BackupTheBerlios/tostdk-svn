@@ -23,6 +23,7 @@
 
 import packet
 import opcodes
+import data
 
 
 #==========================================================================
@@ -36,6 +37,24 @@ class Result ( packet.Packet ):
 		packet.Packet.__init__(self, p_opcode, p_data)
 
 	#----------------------------------------------------------------------
+	@classmethod
+	def create ( cls, p_name, p_args ):
+	#----------------------------------------------------------------------
+
+		l_opcode = opcodes.result_opcode(p_name)
+		l_format = opcodes.result_format(p_name)
+
+		if l_opcode == None or l_format == None:
+			return None
+
+		l_data = data.pack(l_format, p_args)
+
+		if l_data == None:
+			return None
+
+		return cls(l_opcode, l_data)
+
+	#----------------------------------------------------------------------
 	def is_ok ( self ):
 	#----------------------------------------------------------------------
 
@@ -46,6 +65,45 @@ class Result ( packet.Packet ):
 	#----------------------------------------------------------------------
 
 		return opcodes.is_error_result(self.get_opcode())
+
+	#----------------------------------------------------------------------
+	def get_name ( self ):
+	#----------------------------------------------------------------------
+
+		return opcodes.result_name(self.get_opcode())
+
+	#----------------------------------------------------------------------
+	def get_format ( self ):
+	#----------------------------------------------------------------------
+
+		l_name = self.get_name()
+
+		if l_name == None:
+			return None
+
+		return opcodes.result_format(l_name)
+
+	#----------------------------------------------------------------------
+	def get_args ( self ):
+	#----------------------------------------------------------------------
+
+		l_format = self.get_format()
+
+		if l_format == None:
+			return None
+
+		return data.unpack(l_format, self.get_data())
+
+	#----------------------------------------------------------------------
+	def get_args_readable ( self ):
+	#----------------------------------------------------------------------
+
+		l_format = self.get_format()
+
+		if l_format == None:
+			return None
+
+		return data.unpack_readable(l_format, self.get_data())
 
 
 #==========================================================================

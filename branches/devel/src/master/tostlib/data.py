@@ -74,27 +74,27 @@ def pack ( p_format, p_args ):
 def unpack ( p_format, p_data ):
 #==========================================================================
 
-	l_args = []
-	l_data = p_data
+	l_unpack = []
+	l_data   = p_data
 
 	for l_format in p_format:
 
 		if l_format == 'B':
 			if len(l_data) < 1:
 				return None
-			l_args.extend(struct.unpack('>B', l_data[:1]))
+			l_unpack.extend(struct.unpack('>B', l_data[:1]))
 			l_data = l_data[1:]
 
 		elif l_format == 'H':
 			if len(l_data) < 2:
 				return None
-			l_args.extend(struct.unpack('>H', l_data[:2]))
+			l_unpack.extend(struct.unpack('>H', l_data[:2]))
 			l_data = l_data[2:]
 
 		elif l_format == 'I':
 			if len(l_data) < 4:
 				return None
-			l_args.extend(struct.unpack('>I', l_data[:4]))
+			l_unpack.extend(struct.unpack('>I', l_data[:4]))
 			l_data = l_data[4:]
 
 		elif l_format == 'S':
@@ -104,7 +104,7 @@ def unpack ( p_format, p_data ):
 			if len(l_data) < (2 + l_len):
 				return None
 			l_str  = l_data[2: (2 + l_len)].rstrip('\0')
-			l_args.append(l_str)
+			l_unpack.append(l_str)
 			if (l_len & 1): l_len += 1
 			if len(l_data) < (2 + l_len):
 				return None
@@ -117,13 +117,44 @@ def unpack ( p_format, p_data ):
 			if len(l_data) < (2 + l_len):
 				return None
 			l_dat  = l_data[2: (2 + l_len)]
-			l_args.append(l_dat)
+			l_unpack.append(l_dat)
 			if (l_len & 1): l_len += 1
 			if len(l_data) < (2 + l_len):
 				return None
 			l_data = l_data[(2 + l_len):]
 
-	return l_args
+	return l_unpack
+
+#==========================================================================
+def unpack_readable ( p_format, p_data ):
+#==========================================================================
+
+	l_unpack = unpack(p_format, p_data)
+
+	if l_unpack == None:
+		return '* unpack error *'
+
+	l_string = []
+	l_zip    = zip(p_format, l_unpack)
+
+	for l_format, l_data in l_zip:
+
+		if l_format == 'B':
+			l_string.append(str(l_data) + '.b')
+
+		elif l_format == 'H':
+			l_string.append(str(l_data) + '.w')
+
+		elif l_format == 'I':
+			l_string.append(str(l_data) + '.l')
+
+		elif l_format == 'S':
+			l_string.append(l_data)
+
+		elif l_format == 'D':
+			l_string.append('<data>')
+
+	return ', '.join(l_string)
 
 
 #==========================================================================
