@@ -186,6 +186,8 @@ class Project:
 
 		if not self.m_cache.add_entry(l_args[0]):
 			logging.error("Can't update cache entry: " + l_args[0])
+
+			p_journal_entry.unlock()
 			return False
 
 		return True
@@ -225,6 +227,8 @@ class Project:
 
 		if not self.m_cache.remove_entry(l_args[0]):
 			logging.error("Can't update cache entry: " + l_args[0])
+
+			p_journal_entry.unlock()
 			return False
 
 		return True
@@ -280,6 +284,8 @@ class Project:
 
 		if not self.m_cache.rename_entry(l_args[0], l_args[1]):
 			logging.error("Can't update cache entry: " + l_args[0])
+
+			p_journal_entry.unlock()
 			return False
 
 		return True
@@ -314,6 +320,8 @@ class Project:
 
 		if not self.m_cache.update_entry(l_args[0]):
 			logging.error("Can't update cache entry: " + l_args[0])
+
+			p_journal_entry.unlock()
 			return False
 
 		return True
@@ -336,12 +344,31 @@ class Project:
 		if l_string:
 			logging.message("Aborting command: " + l_string)
 
+		l_journal_entry = self.__journal_entry(p_command)
+
+		if l_journal_entry:
+			l_journal_entry.unlock()
+
 	#----------------------------------------------------------------------
 	def timeout_cb  ( self, p_command ):
 	#----------------------------------------------------------------------
 
-		logging.message("Command timeout")
-		self.__post_error(p_command)
+		l_string = self.__command_string(p_command)
+
+		if l_string:
+			logging.message("Command timeout: " + l_string)
+
+		l_journal_entry = self.__journal_entry(p_command)
+
+		if l_journal_entry:
+			l_journal_entry.unlock()
+
+		else:
+			logging.message("Retrying...")
+			p_command.cleanup()
+			return command_queue.CommandQueue.get_instance().insert(p_command)
+
+		return False
 
 	#----------------------------------------------------------------------
 	def finished_cb ( self, p_command ):
@@ -391,7 +418,17 @@ class Project:
 		if l_string:
 			logging.message("Command failed: " + l_string)
 
-		if not p_command.has_guid():
+		l_string = self.__result_string(p_command.get_result())
+
+		if l_string:
+			logging.message('\t' + l_string)
+
+		l_journal_entry = self.__journal_entry(p_command)
+
+		if l_journal_entry:
+			l_journal_entry.unlock()
+
+		else:
 			logging.message("Retrying...")
 			p_command.cleanup()
 			return command_queue.CommandQueue.get_instance().insert(p_command)
@@ -431,6 +468,20 @@ class Project:
 			l_command = l_journal_entry.get_command()
 			l_args    = l_journal_entry.get_args()
 			l_string += os.linesep + '[' + ' '.join([l_command] + l_args) + ']'
+
+		return l_string
+
+	#----------------------------------------------------------------------
+	def __result_string ( self, p_result ):
+	#----------------------------------------------------------------------
+
+		l_string = ''
+
+		l_name = p_result.get_name()
+		l_args = p_result.get_args_readable()
+
+		if l_name != None and l_args != None:
+			l_string = l_name + ': ' + l_args
 
 		return l_string
 

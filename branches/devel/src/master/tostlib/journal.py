@@ -49,11 +49,18 @@ class JournalEntry:
 		self.m_guid    = p_guid
 		self.m_command = p_command
 		self.m_args    = p_args
+		self.m_locked  = False
 
 	#----------------------------------------------------------------------
 	def get_guid    ( self ): return self.m_guid
 	def get_command ( self ): return self.m_command
 	def get_args    ( self ): return self.m_args
+	#----------------------------------------------------------------------
+
+	#----------------------------------------------------------------------
+	def is_locked ( self ): return self.m_locked
+	def lock      ( self ): self.m_locked = True
+	def unlock    ( self ): self.m_locked = False
 	#----------------------------------------------------------------------
 
 	#----------------------------------------------------------------------
@@ -111,15 +118,6 @@ class Journal:
 		return self.__has_entry(l_guid)
 
 	#----------------------------------------------------------------------
-	def get_top_entry ( self ):
-	#----------------------------------------------------------------------
-
-		if self.m_entries:
-			return self.m_entries[0]
-
-		return None
-
-	#----------------------------------------------------------------------
 	def get_entry ( self, p_guid ):
 	#----------------------------------------------------------------------
 
@@ -138,7 +136,7 @@ class Journal:
 
 		l_guid  = self.__guid(p_command, p_args)
 
-		for self.__has_entry(l_guid):
+		if self.__has_entry(l_guid):
 			logging.warning("Entry already exists in journal")
 			return False
 
@@ -163,6 +161,16 @@ class Journal:
 
 		logging.error("Invalid guid: ", p_guid)
 		return False
+
+	#----------------------------------------------------------------------
+	def get_next_entry ( self ):
+	#----------------------------------------------------------------------
+
+		for l_entry in self.m_entries:
+			if not l_entry.is_locked():
+				return l_entry
+
+		return None
 
 	#----------------------------------------------------------------------
 	def __has_entry ( self, p_guid ):
