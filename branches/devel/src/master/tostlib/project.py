@@ -170,7 +170,7 @@ class Project:
 		if not self.m_cache.add_entry(l_file_path, p_simulate=True):
 			return False
 
-		l_command = 'add'
+		l_command = journal.CMD_ADD
 		l_args    = [l_file_path]
 
 		if self.m_journal.has_entry(l_command, l_args):
@@ -209,7 +209,7 @@ class Project:
 		if not self.m_cache.remove_entry(l_file_path, p_simulate=True):
 			return False
 
-		l_command = 'remove'
+		l_command = journal.CMD_REMOVE
 		l_args    = [l_file_path]
 
 		if self.m_journal.has_entry(l_command, l_args):
@@ -264,7 +264,7 @@ class Project:
 			logging.error("Can't move: " + p_old_path + " to " + p_new_path)
 			return False
 
-		l_command = 'rename'
+		l_command = journal.CMD_RENAME
 		l_args    = [l_old_path, l_new_path]
 
 		if self.m_journal.has_entry(l_command, l_args):
@@ -285,14 +285,14 @@ class Project:
 		return True
 
 	#----------------------------------------------------------------------
-	def update_cached_files ( self ):
+	def update_files ( self ):
 	#----------------------------------------------------------------------
 
 		l_outdated = self.m_cache.get_outdated_entries()
 
 		for l_file_path in l_outdated:
 
-			l_command = 'update'
+			l_command = journal.CMD_UPDATE
 			l_args    = [l_file_path]
 
 			if self.m_journal.has_entry(l_command, l_args):
@@ -340,11 +340,7 @@ class Project:
 	def timeout_cb  ( self, p_command ):
 	#----------------------------------------------------------------------
 
-		l_string = self.__command_string(p_command)
-
-		if l_string:
-			logging.message("Command timeout: " + l_string)
-
+		logging.message("Command timeout")
 		self.__post_error(p_command)
 
 	#----------------------------------------------------------------------
@@ -363,19 +359,19 @@ class Project:
 		if l_journal_entry:
 			l_command = l_journal_entry.get_command()
 
-			if l_command == 'add':
+			if l_command == journal.CMD_ADD:
 				if not self.__post_add(p_command, l_journal_entry):
 					return False
 
-			elif l_command == 'remove':
+			elif l_command == journal.CMD_REMOVE:
 				if not self.__post_remove(p_command, l_journal_entry):
 					return False
 
-			elif l_command == 'rename':
+			elif l_command == journal.CMD_RENAME:
 				if not self.__post_rename(p_command, l_journal_entry):
 					return False
 
-			elif l_command == 'update':
+			elif l_command == journal.CMD_UPDATE:
 				if not self.__post_update(p_command, l_journal_entry):
 					return False
 
@@ -390,14 +386,15 @@ class Project:
 	def __post_error ( self, p_command ):
 	#----------------------------------------------------------------------
 
-		if not p_command.has_guid():
-			p_command.cleanup()
-			return command_queue.CommandQueue.get_instance().insert(p_command)
-
 		l_string = self.__command_string(p_command)
 
 		if l_string:
 			logging.message("Command failed: " + l_string)
+
+		if not p_command.has_guid():
+			logging.message("Retrying...")
+			p_command.cleanup()
+			return command_queue.CommandQueue.get_instance().insert(p_command)
 
 		return False
 
@@ -420,14 +417,22 @@ class Project:
 	def __command_string ( self, p_command ):
 	#----------------------------------------------------------------------
 
+		l_string = ''
+
+		l_name = p_command.get_name()
+		l_args = p_command.get_args_readable()
+
+		if l_name != None and l_args != None:
+			l_string += l_name + '(' + l_args + ')'
+
 		l_journal_entry = self.__journal_entry(p_command)
 
 		if l_journal_entry:
 			l_command = l_journal_entry.get_command()
 			l_args    = l_journal_entry.get_args()
-			return ' '.join([l_command] + l_args)
+			l_string += os.linesep + '[' + ' '.join([l_command] + l_args) + ']'
 
-		return None
+		return l_string
 
 	#----------------------------------------------------------------------
 	def __master_path ( self, p_file_path ):
