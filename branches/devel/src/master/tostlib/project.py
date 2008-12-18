@@ -258,6 +258,12 @@ class Project:
 		if not self.m_cache.rename_entry(l_old_path, l_new_path, p_simulate=True):
 			return False
 
+		try:
+			shutil.move(p_old_path, p_new_path)
+		except:
+			logging.error("Can't move: " + p_old_path + " to " + p_new_path)
+			return False
+
 		l_command = 'rename'
 		l_args    = [l_old_path, l_new_path]
 
