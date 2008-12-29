@@ -30,31 +30,36 @@ import logging
 
 
 #==========================================================================
+CACHE_VERSION = 1
+#==========================================================================
+
+
+#==========================================================================
 class CacheEntry:
 #==========================================================================
 
-	#------------------------------------------------------------------
+	#----------------------------------------------------------------------
 	def __init__ ( self, p_id, p_path, p_md5):
-	#------------------------------------------------------------------
+	#----------------------------------------------------------------------
 
 		self.m_id   = p_id
 		self.m_path = p_path
 		self.m_md5  = p_md5
 
-	#------------------------------------------------------------------
+	#----------------------------------------------------------------------
 	def get_id   ( self ): return self.m_id
 	def get_path ( self ): return self.m_path
 	def get_md5  ( self ): return self.m_md5
-	#------------------------------------------------------------------
+	#----------------------------------------------------------------------
 
-	#------------------------------------------------------------------
+	#----------------------------------------------------------------------
 	def set_md5 ( self, p_md5 ): self.m_md5 = p_md5
-	#------------------------------------------------------------------
+	#----------------------------------------------------------------------
 
-	#------------------------------------------------------------------
+	#----------------------------------------------------------------------
 	@classmethod
-	def from_string ( cls, p_string ):
-	#------------------------------------------------------------------
+	def from_string_1 ( cls, p_string ):
+	#----------------------------------------------------------------------
 
 		l_split = p_string.split(os.pathsep)
 
@@ -67,9 +72,9 @@ class CacheEntry:
 
 		return cls(l_id, l_path, l_md5)
 
-	#------------------------------------------------------------------
+	#----------------------------------------------------------------------
 	def to_string ( self ):
-	#------------------------------------------------------------------
+	#----------------------------------------------------------------------
 
 		return os.pathsep.join((self.m_id, self.m_path, self.m_md5)) + os.linesep
 
@@ -330,7 +335,10 @@ class Cache:
 			return None
 
 		l_matcher = difflib.SequenceMatcher(None, l_cache_data, l_file_data)
-		return l_matcher.get_opcodes()
+		l_orig_size  = len(l_cache_data)
+		l_final_size = len(l_file_data)
+
+		return (l_orig_size, l_final_size, l_matcher.get_opcodes())
 
 	#----------------------------------------------------------------------
 	def __cache_path ( self, p_file_path ):
@@ -363,8 +371,28 @@ class Cache:
 			logging.error("Can't open: " + l_db_path)
 			return False
 
-		for l_line in l_handle:
-			l_entry = CacheEntry.from_string(l_line)
+		try:
+			l_version = int(l_handle.readline().strip())
+		except:
+			logging.error("Can't read cache version tag: " + self.m_cache_path)
+			return False
+
+		if l_version == 1:
+			l_result = self.__load_db_1(self, l_handle)
+
+		else:
+			logging.error("Unsupported cache version: " + self.m_cache_path)
+			l_result = False
+
+		l_handle.close()
+		return l_result
+
+	#----------------------------------------------------------------------
+	def __load_db_1 ( self, p_handle ):
+	#----------------------------------------------------------------------
+
+		for l_line in p_handle:
+			l_entry = CacheEntry.from_string_1(l_line)
 
 			if l_entry == None:
 				logging.error("Invalid cache entry: " + l_line.strip())
@@ -372,7 +400,6 @@ class Cache:
 
 			self.m_entries[l_entry.get_path().lower()] = l_entry
 
-		l_handle.close()
 		return True
 
 	#----------------------------------------------------------------------
@@ -381,7 +408,7 @@ class Cache:
 
 		l_db_path = os.path.join(self.m_cache_path, 'cache')
 
-		l_lines = ''
+		l_lines = str(CACHE_VERSION) + os.linesep
 
 		for l_entry in self.m_entries.itervalues():
 			l_lines += l_entry.to_string()

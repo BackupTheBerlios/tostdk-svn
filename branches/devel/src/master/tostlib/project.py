@@ -28,6 +28,7 @@ import logging
 import configuration
 import cache
 import journal
+import master
 import queue
 
 
@@ -100,6 +101,10 @@ class Project:
 	#----------------------------------------------------------------------
 
 		l_master_path = cls.find_project_root(p_master_path)
+
+		if not l_master_path:
+			logging.error("Can't find project root: " + p_master_path)
+			return None
 
 		l_config = configuration.Configuration.get_instance()
 
@@ -327,7 +332,96 @@ class Project:
 		return True
 
 	#----------------------------------------------------------------------
-	def running_cb  ( self, p_command ):
+	def commit ( self ):
+	#----------------------------------------------------------------------
+
+		l_commands = master.make_project_commands(self.m_slave_path)
+		self.__schedule_commands(l_commands)
+
+		while True:
+
+			l_entry = self.m_journal.get_next_entry()
+			if l_entry == None:
+				break
+
+			l_entry.lock()
+
+			if l_entry.get_command() == journal.CMD_ADD:
+				l_commands = self.__make_add_commands(l_entry)
+				self.__schedule_commands(l_commands)
+
+			elif l_entry.get_command() == journal.CMD_REMOVE:
+				l_filename = l_entry.get_args()[0]
+				l_commands = master.make_remove_commands(
+					l_entry.get_guid(),
+					l_filename)
+				self.__schedule_commands(l_commands)
+
+			elif l_entry.get_command() == journal.CMD_RENAME:
+				l_old_filename, l_new_filename = l_entry.get_args()
+				l_commands = master.make_rename_commands(
+					l_entry.get_guid(),
+					l_old_filename,
+					l_new_filename)
+				self.__schedule_commands(l_commands)
+
+			elif l_entry.get_command() == journal.CMD_UPDATE:
+				l_commands = self.__make_update_commands(l_entry)
+				self.__schedule_commands(l_commands)
+
+	#----------------------------------------------------------------------
+	def __make_add_commands ( self, p_journal_entry ):
+	#----------------------------------------------------------------------
+
+		l_guid     = p_journal_entry.get_guid()
+		l_filename = p_journal_entry.get_args()[0]
+		l_filepath = os.path.join(self.m_master_path, l_filename)
+
+		try:
+			l_handle = open(l_filepath, 'rb')
+			l_data   = l_handle.read()
+			l_handle.close()
+		except:
+			p_journal_entry.unlock()
+			logging.error("Can't find file: " + l_filename)
+			return []
+
+		return master.make_add_commands(l_guid, l_filename, l_data)
+
+	#----------------------------------------------------------------------
+	def __make_update_commands ( self, p_journal_entry ):
+	#----------------------------------------------------------------------
+
+		l_guid     = p_journal_entry.get_guid()
+		l_filename = p_journal_entry.get_args()[0]
+		l_diff     = self.m_cache.get_entry_diff(l_filename)
+
+		if l_diff == None:
+			p_journal_entry.unlock()
+			logging.error("Can't get diffs: " + l_filename)
+			return []
+
+		return master.make_update_commands(l_guid, l_filename, l_diff)
+
+	#----------------------------------------------------------------------
+	def __schedule_commands ( self, p_commands ):
+	#----------------------------------------------------------------------
+
+		l_queue = queue.Queue.get_instance()
+
+		l_callbacks = {
+			'running' : self.__running_cb,
+			'aborted' : self.__aborted_cb,
+			'timeout' : self.__timeout_cb,
+			'finished': self.__finished_cb
+		}
+
+		for l_command in p_commands:
+			l_command.set_callbacks(l_callbacks)
+			l_queue.append(l_command)
+
+	#----------------------------------------------------------------------
+	def __running_cb  ( self, p_command ):
 	#----------------------------------------------------------------------
 
 		l_string = self.__command_string(p_command)
@@ -336,7 +430,7 @@ class Project:
 			logging.message("Running command: " + l_string)
 
 	#----------------------------------------------------------------------
-	def aborted_cb  ( self, p_command ):
+	def __aborted_cb  ( self, p_command ):
 	#----------------------------------------------------------------------
 
 		l_string = self.__command_string(p_command)
@@ -350,7 +444,7 @@ class Project:
 			l_journal_entry.unlock()
 
 	#----------------------------------------------------------------------
-	def timeout_cb  ( self, p_command ):
+	def __timeout_cb  ( self, p_command ):
 	#----------------------------------------------------------------------
 
 		l_string = self.__command_string(p_command)
@@ -371,7 +465,7 @@ class Project:
 		return False
 
 	#----------------------------------------------------------------------
-	def finished_cb ( self, p_command ):
+	def __finished_cb ( self, p_command ):
 	#----------------------------------------------------------------------
 
 		if not p_command.has_result():

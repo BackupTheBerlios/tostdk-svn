@@ -28,14 +28,16 @@ import logging
 
 
 #==========================================================================
-# Commands
+JOURNAL_VERSION = 1
 #==========================================================================
 
 
+#==========================================================================
 CMD_ADD    = 'add'
 CMD_REMOVE = 'remove'
 CMD_RENAME = 'rename'
 CMD_UPDATE = 'update'
+#==========================================================================
 
 
 #==========================================================================
@@ -65,7 +67,7 @@ class JournalEntry:
 
 	#----------------------------------------------------------------------
 	@classmethod
-	def from_string ( cls, p_string ):
+	def from_string_1 ( cls, p_string ):
 	#----------------------------------------------------------------------
 
 		l_split = p_string.strip().split('\t')
@@ -211,8 +213,28 @@ class Journal:
 			logging.error("Can't open: " + l_db_path)
 			return False
 
-		for l_line in l_handle:
-			l_entry = JournalEntry.from_string(l_line)
+		try:
+			l_version = int(l_handle.readline().strip())
+		except:
+			logging.error("Can't read journal version tag: " + l_db_path)
+			return False
+
+		if l_version == 1:
+			l_result = self.__load_journal_1(l_handle)
+
+		else:
+			logging.error("Unsupported journal version: " + l_db_path)
+			l_result = False
+
+		l_handle.close()
+		return l_result
+
+	#----------------------------------------------------------------------
+	def __load_journal_1 ( self, p_handle ):
+	#----------------------------------------------------------------------
+
+		for l_line in p_handle:
+			l_entry = JournalEntry.from_string_1(l_line)
 
 			if l_entry == None:
 				logging.error("Invalid cache entry: " + l_line.strip())
@@ -220,7 +242,6 @@ class Journal:
 
 			self.m_entries.append(l_entry)
 
-		l_handle.close()
 		return True
 
 	#----------------------------------------------------------------------
@@ -229,7 +250,7 @@ class Journal:
 
 		l_db_path = os.path.join(self.m_project_path, 'journal')
 
-		l_lines = ''
+		l_lines = str(JOURNAL_VERSION) + os.linesep
 
 		for l_entry in self.m_entries:
 			l_lines += l_entry.to_string()
