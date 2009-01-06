@@ -45,39 +45,21 @@ def make_add_commands ( p_guid, p_filename, p_filedata ):
 #==========================================================================
 
 	l_config = configuration.Configuration.get_instance()
-	l_max_data_size    = l_config.get_option_value('protocol', 'packet_size')
 	l_malloc_timeout   = l_config.get_option_value('protocol', 'malloc_timeout')
-	l_download_timeout = l_config.get_option_value('protocol', 'download_timeout')
-	l_unpack_timeout   = l_config.get_option_value('protocol', 'unpack_timeout')
 	l_create_timeout   = l_config.get_option_value('protocol', 'create_timeout')
 	l_write_timeout    = l_config.get_option_value('protocol', 'write_timeout')
 	l_close_timeout    = l_config.get_option_value('protocol', 'close_timeout')
 	l_free_timeout     = l_config.get_option_value('protocol', 'free_timeout')
 
 	l_file_size = len(p_filedata)
-	l_data      = pooky.pack(p_filedata)
-	l_data_size = len(l_data)
-	l_offset    = l_file_size - l_data_size
 
 	l_seq  = [
 		command.Command.create(opcodes.MALLOC, [l_file_size], l_malloc_timeout)
 	]
 
-	l_current = l_offset
-
-	while l_data:
-		l_packet      = l_data[:l_max_data_size]
-		l_packet_size = len(l_packet)
-		l_data        = l_data[l_packet_size:]
-
-		l_seq.append(
-			command.Command.create(opcodes.DOWNLOAD,
-				[l_current, l_packet_size, l_packet], l_download_timeout))
-
-		l_current += l_packet_size
+	l_seq.extend(__download_commands(0, p_filedata))
 
 	l_seq.extend([
-		command.Command.create(opcodes.UNPACK, [l_offset, 0],    l_unpack_timeout),
 		command.Command.create(opcodes.CREATE, [p_filename],     l_create_timeout),
 		command.Command.create(opcodes.WRITE,  [0, l_file_size], l_write_timeout),
 		command.Command.create(opcodes.CLOSE,  [],               l_close_timeout),
@@ -111,16 +93,12 @@ def make_rename_commands ( p_guid, p_old_filename, p_new_filename ):
 	]
 
 #==========================================================================
-def make_update_commands ( p_guid, p_filename, p_diff ):
+def make_update_commands ( p_guid, p_filename, p_diff, p_filedata ):
 #==========================================================================
 
 	l_config = configuration.Configuration.get_instance()
-	l_max_data_size    = l_config.get_option_value('protocol', 'packet_size')
 	l_malloc_timeout   = l_config.get_option_value('protocol', 'malloc_timeout')
-	l_download_timeout = l_config.get_option_value('protocol', 'download_timeout')
-	l_unpack_timeout   = l_config.get_option_value('protocol', 'unpack_timeout')
 	l_open_timeout     = l_config.get_optiob_value('protocol', 'open_timeout')
-	l_create_timeout   = l_config.get_option_value('protocol', 'create_timeout')
 	l_seek_timeout     = l_config.get_option_value('protocol', 'seek_timeout')
 	l_read_timeout     = l_config.get_option_value('protocol', 'read_timeout')
 	l_write_timeout    = l_config.get_option_value('protocol', 'write_timeout')
@@ -130,12 +108,47 @@ def make_update_commands ( p_guid, p_filename, p_diff ):
 	l_orig_size, l_final_size, l_matcher = p_diff
 
 	l_seq = [
-		command.Command.create(opcodes.MALLOC, [l_final_size],   l_malloc_timeout),
-		command.Command.create(opcodes.OPEN,   [p_filename],     l_open_timeout),
-		command.Command.create(opcodes.READ,   [0, l_orig_size], l_read_timeout)
+		command.Command.create(opcodes.MALLOC, [l_final_size], l_malloc_timeout),
+		command.Command.create(opcodes.OPEN,   [p_filename],   l_open_timeout),
 	]
 
-	# TODO: read docs and implement...
+	l_file_offset = 0
+	l_mem_offset  = 0
+
+	for l_tag, l_i1, l_i2, l_j1, l_j2 in p_diff:
+
+		if l_tag == 'replace':
+
+			l_file_offset += l_i2 - l_i1
+			l_seq.append(
+				command.Command.create(opcodes.SEEK, [l_file_offset], l_seek_timeout))
+
+			l_data = p_filedata[l_j1:l_j2]
+			l_seq.extend(__download_commands(l_mem_offset, l_data))
+
+			l_mem_offset += l_j2 - l_j1
+
+		elif l_tag == 'delete':
+
+			l_file_offset += l_i2 - l_i1
+			l_seq.append(
+				command.Command.create(opcodes.SEEK, [l_file_offset], l_seek_timeout))
+
+		elif l_tag == 'insert':
+
+			l_data = p_filedata[l_j1:l_j2]
+			l_seq.extend(__download_commands(l_mem_offset, l_data))
+
+			l_mem_offset += l_j2 - l_j1
+
+		elif l_tag == 'equal':
+
+			l_length = l_i2 - l_i1
+			l_seq.append(
+				command.Command.create(opcodes.READ, [l_mem_offset, l_length], l_read_timeout))
+
+			l_file_offset += l_length
+			l_mem_offset  += l_length
 
 	l_seq.extend([
 		command.Command.create(opcodes.SEEK,  [0],               l_seek_timeout),
@@ -143,6 +156,39 @@ def make_update_commands ( p_guid, p_filename, p_diff ):
 		command.Command.create(opcodes.CLOSE, [],                l_close_timeout),
 		command.Command.create(opcodes.FREE,  [],                l_free_timeout, p_guid)
 	])
+
+	return l_seq
+
+#==========================================================================
+def __download_commands ( p_offset, p_data ):
+#==========================================================================
+
+	l_config = configuration.Configuration.get_instance()
+	l_max_data_size    = l_config.get_option_value('protocol', 'packet_size')
+	l_download_timeout = l_config.get_option_value('protocol', 'download_timeout')
+	l_unpack_timeout   = l_config.get_option_value('protocol', 'unpack_timeout')
+
+	l_seq = []
+
+	l_size      = len(p_data)
+	l_data      = pooky.pack(p_data)
+	l_data_size = len(l_data)
+	l_offset    = p_offset + (l_size - l_data_size)
+	l_current   = l_offset
+
+	while l_data:
+		l_packet      = l_data[:l_max_data_size]
+		l_packet_size = len(l_packet)
+		l_data        = l_data[l_packet_size:]
+
+		l_seq.append(
+			command.Command.create(opcodes.DOWNLOAD,
+				[l_current, l_packet_size, l_packet], l_download_timeout))
+
+		l_current += l_packet_size
+
+	l_seq.append(
+		command.Command.create(opcodes.UNPACK, [l_offset, p_offset], l_unpack_timeout))
 
 	return l_seq
 

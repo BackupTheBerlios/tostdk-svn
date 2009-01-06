@@ -397,12 +397,21 @@ class Project:
 		l_filename = p_journal_entry.get_args()[0]
 		l_diff     = self.m_cache.get_entry_diff(l_filename)
 
+		try:
+			l_handle = open(l_filepath, 'rb')
+			l_data   = l_handle.read()
+			l_handle.close()
+		except:
+			p_journal_entry.unlock()
+			logging.error("Can't find file: " + l_filename)
+			return []
+
 		if l_diff == None:
 			p_journal_entry.unlock()
 			logging.error("Can't get diffs: " + l_filename)
 			return []
 
-		return master.make_update_commands(l_guid, l_filename, l_diff)
+		return master.make_update_commands(l_guid, l_filename, l_diff, l_data)
 
 	#----------------------------------------------------------------------
 	def __schedule_commands ( self, p_commands ):
