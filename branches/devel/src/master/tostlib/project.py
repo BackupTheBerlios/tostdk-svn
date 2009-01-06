@@ -28,6 +28,7 @@ import logging
 import configuration
 import cache
 import journal
+import command
 import master
 import queue
 
@@ -410,10 +411,10 @@ class Project:
 		l_queue = queue.Queue.get_instance()
 
 		l_callbacks = {
-			'running' : self.__running_cb,
-			'aborted' : self.__aborted_cb,
-			'timeout' : self.__timeout_cb,
-			'finished': self.__finished_cb
+			command.RUNNING : self.__running_cb,
+			command.ABORTED : self.__aborted_cb,
+			command.TIMEOUT : self.__timeout_cb,
+			command.FINISHED: self.__finished_cb
 		}
 
 		for l_command in p_commands:

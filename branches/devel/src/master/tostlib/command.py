@@ -29,9 +29,9 @@ import data
 #==========================================================================
 PENDING  = 0
 RUNNING  = 1
-FINISHED = 2
-ABORTED  = 3
-TIMEOUT  = 4
+ABORTED  = 2
+TIMEOUT  = 3
+FINISHED = 4
 #==========================================================================
 
 
@@ -153,17 +153,17 @@ class Command ( packet.Packet ):
 	def set_callbacks ( self, p_callbacks ):
 	#----------------------------------------------------------------------
 
-		if p_callbacks.has_key('running'):
-			self.m_running_cb  = p_callbacks['running']
+		if p_callbacks.has_key(RUNNING):
+			self.m_running_cb  = p_callbacks[RUNNING]
 
-		if p_callbacks.has_key('aborted'):
-			self.m_aborted_cb  = p_callbacks['aborted']
+		if p_callbacks.has_key(ABORTED):
+			self.m_aborted_cb  = p_callbacks[ABORTED]
 
-		if p_callbacks.has_key('timeout'):
-			self.m_timeout_cb  = p_callbacks['timeout']
+		if p_callbacks.has_key(TIMEOUT):
+			self.m_timeout_cb  = p_callbacks[TIMEOUT]
 
-		if p_callbacks.has_key('finished'):
-			self.m_finished_cb = p_callbacks['finished']
+		if p_callbacks.has_key(FINISHED):
+			self.m_finished_cb = p_callbacks[FINISHED]
 
 	#----------------------------------------------------------------------
 	def running_cb  ( self ):
