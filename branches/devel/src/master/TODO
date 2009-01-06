@@ -1,5 +1,6 @@
 [x][tostlib] cache / journal version tag
 [x][tostlib] redesign opcodes: remove names, use only constants
 [ ][tostlib] handle packet retry when data is corrupted
+[ ][tostlib] make updating files safer
 [ ][tostlib] add directories to cache
 [ ][tostlib] remove and rename directories
