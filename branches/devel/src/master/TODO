@@ -1,4 +1,4 @@
 [x][tostlib] cache / journal version tag
-[ ][tostlib] redesign opcodes: remove names, use only constants
+[x][tostlib] redesign opcodes: remove names, use only constants
 [ ][tostlib] add directories to cache
 [ ][tostlib] remove and rename directories

@@ -21,46 +21,134 @@
 #==========================================================================
 
 
+#==========================================================================
+FIRST_COMMAND	= 0
+#--------------------------------------------------------------------------
+PING			= FIRST_COMMAND + 0
+CHROOT			= FIRST_COMMAND + 1
+MV				= FIRST_COMMAND + 2
+RM				= FIRST_COMMAND + 3
+MALLOC			= FIRST_COMMAND + 4
+FREE			= FIRST_COMMAND + 5
+DOWNLOAD		= FIRST_COMMAND + 6
+UNPACK			= FIRST_COMMAND + 7
+OPEN			= FIRST_COMMAND + 8
+CREATE			= FIRST_COMMAND + 9
+SEEK			= FIRST_COMMAND + 10
+READ			= FIRST_COMMAND + 11
+WRITE			= FIRST_COMMAND + 12
+CLOSE			= FIRST_COMMAND + 13
+#==========================================================================
+FIRST_OK		= 0
+#--------------------------------------------------------------------------
+PONG			= FIRST_OK + 0
+OK				= FIRST_OK + 1
+#==========================================================================
+FIRST_ERROR		= 128
+#--------------------------------------------------------------------------
+FILENOTFOUND	= FIRST_ERROR + 0
+FILEIO			= FIRST_ERROR + 1
+OUTOFMEMORY		= FIRST_ERROR + 2
+#==========================================================================
+
+
+#--------------------------------------------------------------------------
+COMMANDS = (
+#--------------------------------------------------------------------------
+	PING,
+	CHROOT,
+	MV,
+	RM,
+	MALLOC,
+	FREE,
+	DOWNLOAD,
+	UNPACK,
+	OPEN,
+	CREATE,
+	SEEK,
+	READ,
+	WRITE,
+	CLOSE
+)
+
+#--------------------------------------------------------------------------
+RESULTS_OK = (
+#--------------------------------------------------------------------------
+	PONG,
+	OK
+)
+
+#--------------------------------------------------------------------------
+RESULTS_ERROR = (
+#--------------------------------------------------------------------------
+	FILENOTFOUND,
+	FILEIO,
+	OUTOFMEMORY
+)
+
+#--------------------------------------------------------------------------
+COMMANDS_NAME = {
+#--------------------------------------------------------------------------
+	PING			: 'ping',
+	CHROOT			: 'chroot',
+	MV				: 'mv',
+	RM				: 'rm',
+	MALLOC			: 'malloc',
+	FREE			: 'free',
+	DOWNLOAD		: 'download',
+	UNPACK			: 'unpack',
+	OPEN			: 'open',
+	CREATE			: 'create',
+	SEEK			: 'seek',
+	READ			: 'read',
+	WRITE			: 'write',
+	CLOSE			: 'close'
+}
+
+#--------------------------------------------------------------------------
+RESULTS_NAME = {
+#--------------------------------------------------------------------------
+	PONG			: 'pong',
+	OK				: 'ok',
+	FILENOTFOUND	: 'filenotfound',
+	FILEIO			: 'fileio',
+	OUTOFMEMORY		: 'outofmemory'
+}
+
+#--------------------------------------------------------------------------
+COMMANDS_OPCODE = dict(map(lambda x: (x[1], x[0]), COMMANDS_NAME.iteritems()))
+RESULTS_OPCODE  = dict(map(lambda x: (x[1], x[0]), RESULTS_NAME.iteritems()))
+#--------------------------------------------------------------------------
+
 # see data.py for formats specifications
 
-
 #--------------------------------------------------------------------------
-COMMANDS = {
+COMMANDS_FORMAT = {
 #--------------------------------------------------------------------------
-	'PING'		: '',				#
-	'CHROOT'	: 'S',				# pathname
-	'MV'		: 'SS',				# source_filename,dest_filename
-	'RM'		: 'S',				# filename
-	'MALLOC'	: 'I',				# size
-	'FREE'		: '',				#
-	'MEMMOVE'	: 'III',			# source_offset,dest_offset,size
-	'DOWNLOAD'	: 'IHD',			# offset,size,data
-	'UNPACK'	: 'II',				# source_offset,dest_offset
-	'OPEN'		: 'S',				# filename
-	'CREATE'	: 'S',				# filename
-	'SEEK'		: 'I',				# offset
-	'READ'		: 'II',				# offset,size
-	'WRITE'		: 'II',				# offset,size
-	'CLOSE'		: '',				#
+	PING			: '',		#
+	CHROOT			: 'S',		# pathname
+	MV				: 'SS',		# source_filename,dest_filename
+	RM				: 'S',		# filename
+	MALLOC			: 'I',		# size
+	FREE			: '',		#
+	DOWNLOAD		: 'IHD',	# offset,size,data
+	UNPACK			: 'II',		# source_offset,dest_offset
+	OPEN			: 'S',		# filename
+	CREATE			: 'S',		# filename
+	SEEK			: 'I',		# offset
+	READ			: 'II',		# offset,size
+	WRITE			: 'II',		# offset,size
+	CLOSE			: '',		#
 }
 
 #--------------------------------------------------------------------------
-RESULTS_OK = {
+RESULTS_FORMAT = {
 #--------------------------------------------------------------------------
-	'PONG'		: '',				#
-	'OK'		: '',				#
-}
-
-#--------------------------------------------------------------------------
-RESULTS_SPLIT = 128
-#--------------------------------------------------------------------------
-
-#--------------------------------------------------------------------------
-RESULTS_ERROR = {
-#--------------------------------------------------------------------------
-	'FILENOTFOUND'		: 'S',		# filename
-	'FILEIO'			: 'S',		# filename
-	'OUTOFMEMORY'		: 'I',		# biggest block available
+	PONG			: '',		#
+	OK				: '',		#
+	FILENOTFOUND	: 'S',		# filename
+	FILEIO			: 'S',		# filename
+	OUTOFMEMORY		: 'I',		# biggest block available
 }
 
 
@@ -73,10 +161,10 @@ RESULTS_ERROR = {
 def command_opcode ( p_name ):
 #--------------------------------------------------------------------------
 
-	l_name = p_name.upper()
+	l_name = p_name.lower()
 
-	if COMMANDS.has_key(l_name):
-		return sorted(COMMANDS.keys()).index(l_name)
+	if COMMANDS_OPCODE.has_key(l_name):
+		return COMMANDS_OPCODES[l_name]
 
 	return None
 
@@ -84,19 +172,17 @@ def command_opcode ( p_name ):
 def command_name ( p_opcode ):
 #--------------------------------------------------------------------------
 
-	if p_opcode < len(COMMANDS.keys()):
-		return sorted(COMMANDS.keys())[p_opcode]
+	if COMMANDS_NAME.has_key(p_opcode):
+		return COMMANDS_NAME[p_opcode]
 
 	return None
 
 #--------------------------------------------------------------------------
-def command_format ( p_name ):
+def command_format ( p_opcode ):
 #--------------------------------------------------------------------------
 
-	l_name = p_name.upper()
-
-	if COMMANDS.has_key(l_name):
-		return COMMANDS[l_name]
+	if COMMANDS_FORMAT.has_key(p_opcode):
+		return COMMANDS_FORMAT[p_opcode]
 
 	return None
 
@@ -110,13 +196,10 @@ def command_format ( p_name ):
 def result_opcode ( p_name ):
 #--------------------------------------------------------------------------
 
-	l_name = p_name.upper()
+	l_name = p_name.lower()
 
-	if RESULTS_OK.has_key(l_name):
-		return sorted(RESULTS_OK.keys()).index(l_name)
-
-	elif RESULTS_ERROR.has_key(l_name):
-		return sorted(RESULTS_ERROR.keys()).index(l_name) + RESULTS_SPLIT
+	if RESULTS_OPCODE.has_key(l_name):
+		return RESULTS_OPCODE[l_name]
 
 	return None
 
@@ -124,27 +207,17 @@ def result_opcode ( p_name ):
 def result_name ( p_opcode ):
 #--------------------------------------------------------------------------
 
-	if p_opcode < RESULTS_SPLIT and \
-			p_opcode < len(RESULTS_OK.keys()):
-		return sorted(RESULTS_OK.keys())[p_opcode]
-
-	elif p_opcode >= RESULTS_SPLIT and \
-			(p_opcode - RESULTS_SPLIT) < len(RESULTS_ERROR.keys()):
-		return sorted(RESULTS_ERROR.keys())[p_opcode - RESULTS_SPLIT]
+	if RESULTS_NAME.has_key(p_opcode):
+		return RESULTS_NAME[p_opcode]
 
 	return None
 
 #--------------------------------------------------------------------------
-def result_format ( p_name ):
+def result_format ( p_opcode ):
 #--------------------------------------------------------------------------
 
-	l_name = p_name.upper()
-
-	if RESULTS_OK.has_key(l_name):
-		return RESULTS_OK[l_name]
-
-	elif RESULTS_ERROR.has_key(l_name):
-		return RESULTS_ERROR[l_name]
+	if RESULTS_FORMAT.has_key(p_opcode):
+		return RESULTS_FORMAT[p_opcode]
 
 	return None
 
@@ -152,13 +225,13 @@ def result_format ( p_name ):
 def is_ok_result ( p_opcode ):
 #--------------------------------------------------------------------------
 
-	return (p_opcode < RESULTS_SPLIT)
+	return (p_opcode in RESULTS_OK)
 
 #--------------------------------------------------------------------------
 def is_error_result ( p_opcode ):
 #--------------------------------------------------------------------------
 
-	return (p_opcode >= RESULTS_SPLIT)
+	return (p_opcode in RESULTS_ERROR)
 
 
 #==========================================================================

@@ -65,13 +65,12 @@ class Command ( packet.Packet ):
 
 	#----------------------------------------------------------------------
 	@classmethod
-	def create ( cls, p_name, p_args, p_timeout = 0.0, p_guid = None ):
+	def create ( cls, p_opcode, p_args, p_timeout = 0.0, p_guid = None ):
 	#----------------------------------------------------------------------
 
-		l_opcode = opcodes.command_opcode(p_name)
-		l_format = opcodes.command_format(p_name)
+		l_format = opcodes.command_format(p_opcode)
 
-		if l_opcode == None or l_format == None:
+		if l_format == None:
 			return None
 
 		l_data = data.pack(l_format, p_args)
@@ -79,7 +78,7 @@ class Command ( packet.Packet ):
 		if l_data == None:
 			return None
 
-		l_command = cls(l_opcode, l_data)
+		l_command = cls(p_opcode, l_data)
 
 		l_command.set_timeout(p_timeout)
 		l_command.set_guid(p_guid)
@@ -119,12 +118,7 @@ class Command ( packet.Packet ):
 	def get_format ( self ):
 	#----------------------------------------------------------------------
 
-		l_name = self.get_name()
-
-		if l_name == None:
-			return None
-
-		return opcodes.command_format(l_name)
+		return opcodes.command_format(self.get_opcode())
 
 	#----------------------------------------------------------------------
 	def get_args ( self ):

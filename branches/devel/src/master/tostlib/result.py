@@ -38,13 +38,12 @@ class Result ( packet.Packet ):
 
 	#----------------------------------------------------------------------
 	@classmethod
-	def create ( cls, p_name, p_args ):
+	def create ( cls, p_opcode, p_args ):
 	#----------------------------------------------------------------------
 
-		l_opcode = opcodes.result_opcode(p_name)
-		l_format = opcodes.result_format(p_name)
+		l_format = opcodes.result_format(p_opcode)
 
-		if l_opcode == None or l_format == None:
+		if l_format == None:
 			return None
 
 		l_data = data.pack(l_format, p_args)
@@ -52,7 +51,7 @@ class Result ( packet.Packet ):
 		if l_data == None:
 			return None
 
-		return cls(l_opcode, l_data)
+		return cls(p_opcode, l_data)
 
 	#----------------------------------------------------------------------
 	def is_ok ( self ):
@@ -76,12 +75,7 @@ class Result ( packet.Packet ):
 	def get_format ( self ):
 	#----------------------------------------------------------------------
 
-		l_name = self.get_name()
-
-		if l_name == None:
-			return None
-
-		return opcodes.result_format(l_name)
+		return opcodes.result_format(self.get_opcode())
 
 	#----------------------------------------------------------------------
 	def get_args ( self ):
