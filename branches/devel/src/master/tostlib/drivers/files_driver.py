@@ -50,21 +50,10 @@ class FilesDriver ( BufferedReadDriver, BufferedWriteDriver ):
 		if not self.m_input_path or not self.m_output_path:
 			return False
 
-		if not os.path.exists(self.m_input_path):
-			try:
-				open(self.m_input_path, 'wb').close()
-			except:
-				return False
-
-		if not os.path.exists(self.m_output_path):
-			try:
-				open(self.m_output_path, 'wb').close()
-			except:
-				return False
-
 		try:
 			self.m_input_handle  = open(self.m_input_path,  'rb', 0)
 			self.m_output_handle = open(self.m_output_path, 'wb', 0)
+
 		except:
 			self.m_input_handle  = None
 			self.m_output_handle = None
@@ -72,6 +61,7 @@ class FilesDriver ( BufferedReadDriver, BufferedWriteDriver ):
 
 		BufferedReadDriver.open(self, self.m_input_handle)
 		BufferedWriteDriver.open(self, self.m_output_handle)
+
 		return True
 
 	#----------------------------------------------------------------------
@@ -97,18 +87,6 @@ class FilesDriver ( BufferedReadDriver, BufferedWriteDriver ):
 
 		self.m_input_handle  = None
 		self.m_output_handle = None
-
-		if os.path.exists(self.m_input_path):
-			try:
-				os.remove(self.m_input_path)
-			except:
-				l_ret = False
-
-		if os.path.exists(self.m_output_path):
-			try:
-				os.remove(self.m_output_path)
-			except:
-				l_ret = False
 
 		return l_ret
 
