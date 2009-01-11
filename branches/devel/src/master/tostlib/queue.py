@@ -26,9 +26,10 @@ import struct
 
 import logging
 import singleton
+import driver
+import packet
 import command
 import result
-import driver
 
 
 #==========================================================================
@@ -38,17 +39,29 @@ class Queue ( singleton.Singleton ):
 	s_instance = None
 
 	#----------------------------------------------------------------------
+	STATE_IDLE      = 0
+	STATE_SENDING   = 1
+	STATE_RECEIVING = 2
+	#----------------------------------------------------------------------
+
+	#----------------------------------------------------------------------
 	def __init__ ( self ):
 	#----------------------------------------------------------------------
 
 		self.m_queue   = []
 
+		self.m_state   = self.STATE_IDLE
 		self.m_running = None
 		self.m_time    = 0.0
 		self.m_timeout = 0.0
 
-		self.m_input_buffer  = ''
-		self.m_output_buffer = ''
+		self.m_buffer  = ''
+
+	#----------------------------------------------------------------------
+	def __del__ ( self ):
+	#----------------------------------------------------------------------
+
+		driver.Driver.del_instance()
 
 	#----------------------------------------------------------------------
 	def is_empty ( self ): return (not self.m_queue)
@@ -93,57 +106,116 @@ class Queue ( singleton.Singleton ):
 			l_running.aborted_cb()
 
 		for l_command in l_queue:
+			l_command.m_state = command.ABORTED
 			l_command.aborted_cb()
 
-		self.m_input_buffer  = ''
-		self.m_output_buffer = ''
+		self.m_buffer = ''
+		self.m_state  = self.STATE_IDLE
 
 	#----------------------------------------------------------------------
 	def process ( self ):
 	#----------------------------------------------------------------------
 
-		if not self.m_running:
+		if self.m_state == self.STATE_IDLE:
 
-			if not self.m_queue:
+			if not self.__state_idle():
 				return False
 
-			self.m_running = self.m_queue.pop(0)
+		elif self.m_state == self.STATE_SENDING:
 
-			self.m_running.m_state = command.RUNNING
-			self.m_running.running_cb()
+			if not self.__state_sending():
+				return False
 
-			self.m_time = time.time()
-			self.m_timeout = self.m_running.get_timeout()
-			self.m_output_buffer = self.m_running.pack()
+		elif self.m_state == self.STATE_RECEIVING:
 
-		l_driver = driver.Driver.get_instance()
+			if not self.__state_receiving():
+				return False
 
-		if self.m_output_buffer:
-			if not self.__send(l_driver):
-				logging.error("Can't send data to driver")
+		if not self.__check_timeout():
+			return False
+
+		return True
+
+	#----------------------------------------------------------------------
+	def __state_idle ( self ):
+	#----------------------------------------------------------------------
+
+		if not self.m_queue:
+			return False
+
+		self.m_state   = self.STATE_SENDING
+		self.m_running = self.m_queue.pop(0)
+
+		self.m_running.m_state = command.RUNNING
+		self.m_running.running_cb()
+
+		self.m_time    = time.time()
+		self.m_timeout = self.m_running.get_timeout()
+		self.m_buffer  = self.m_running.pack()
+
+		return True
+
+	#----------------------------------------------------------------------
+	def __state_sending ( self ):
+	#----------------------------------------------------------------------
+
+		if not self.__send():
+			logging.error("Can't send data to driver")
+			self.abort()
+			return False
+
+		if not self.m_buffer:
+			self.m_state = self.STATE_RECEIVING
+
+		return True
+
+	#----------------------------------------------------------------------
+	def __state_receiving ( self ):
+	#----------------------------------------------------------------------
+
+		if not self.__receive():
+			logging.error("Can't receive data from driver")
+			self.abort()
+			return False
+
+		l_check = packet.Packet.check(self.m_buffer)
+
+		if l_check == packet.Packet.VALID:
+
+			l_running = self.m_running
+			l_result  = result.Result.unpack(self.m_buffer)
+
+			self.m_state   = self.STATE_IDLE
+			self.m_running = None
+			self.m_buffer  = ''
+
+			l_running.m_status = command.FINISHED
+			l_running.m_result = l_result
+
+			if not l_running.finished_cb():
 				self.abort()
 				return False
 
-		else:
-			l_result = result.Result.unpack(self.m_input_buffer)
+		elif l_check == packet.Packet.TAG_ERROR:
+			logging.error("Invalid packet tag")
+			self.abort()
+			return False
 
-			if l_result != None:
-				self.m_input_buffer = ''
+		elif l_check == packet.Packet.CHECKSUM_ERROR:
+			logging.error("Invalid packet checksum")
+			self.abort()
+			return False
 
-				l_running = self.m_running
-				self.m_running = None
+		elif l_check == packet.Packet.CRC8_ERROR:
+			logging.error("Invalid packet crc")
+			self.abort()
+			return False
 
-				l_running.m_status = command.FINISHED
-				l_running.m_result = l_result
-				if not l_running.finished_cb():
-					self.abort()
-					return False
+		return True
 
-			else:
-				if not self.__receive(l_driver):
-					logging.error("Can't receive data from driver")
-					self.abort()
-					return False
+	#----------------------------------------------------------------------
+	def __check_timeout ( self ):
+	#----------------------------------------------------------------------
 
 		if self.m_running and self.m_timeout > 0.0:
 			if (time.time() - self.m_time) > self.m_timeout:
@@ -160,30 +232,30 @@ class Queue ( singleton.Singleton ):
 		return True
 
 	#----------------------------------------------------------------------
-	def __send ( self, p_driver ):
+	def __send ( self ):
 	#----------------------------------------------------------------------
 
-		while self.m_output_buffer and p_driver.can_write():
-			l_byte = self.m_output_buffer[0]
+		l_driver = driver.Driver.get_instance()
 
-			if not p_driver.write_byte(l_byte):
-				return False
+		if not l_driver:
+			return False
 
-			self.m_output_buffer = self.m_output_buffer[1:]
+		if self.m_buffer:
+			l_length = l_driver.write(self.m_buffer)
+			self.m_buffer = self.m_buffer[l_length:]
 
 		return True
 
 	#----------------------------------------------------------------------
-	def __receive ( self, p_driver ):
+	def __receive ( self ):
 	#----------------------------------------------------------------------
 
-		while p_driver.can_read():
-			l_byte = p_driver.read_byte()
+		l_driver = driver.Driver.get_instance()
 
-			if l_byte == None:
-				return False
+		if not l_driver:
+			return False
 
-			self.m_input_buffer += l_byte
+		self.m_buffer += l_driver.read()
 
 		return True
 

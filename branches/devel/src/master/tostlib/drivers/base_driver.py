@@ -68,9 +68,9 @@ class BaseDriver:
 		try:
 			self.m_write_handle.write(p_data)
 		except:
-			return False
+			return 0
 
-		return True
+		return len(p_data)
 
 
 #==========================================================================
