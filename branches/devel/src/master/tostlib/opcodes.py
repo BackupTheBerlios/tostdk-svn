@@ -22,39 +22,43 @@
 
 
 #==========================================================================
-FIRST_COMMAND	= 0
+FIRST_COMMAND		= 0
 #--------------------------------------------------------------------------
-PING			= FIRST_COMMAND + 0
-CHROOT			= FIRST_COMMAND + 1
-MV				= FIRST_COMMAND + 2
-RM				= FIRST_COMMAND + 3
-MALLOC			= FIRST_COMMAND + 4
-FREE			= FIRST_COMMAND + 5
-DOWNLOAD		= FIRST_COMMAND + 6
-UNPACK			= FIRST_COMMAND + 7
-OPEN			= FIRST_COMMAND + 8
-CREATE			= FIRST_COMMAND + 9
-SEEK			= FIRST_COMMAND + 10
-READ			= FIRST_COMMAND + 11
-WRITE			= FIRST_COMMAND + 12
-CLOSE			= FIRST_COMMAND + 13
-#==========================================================================
-FIRST_OK		= 0
-#--------------------------------------------------------------------------
-PONG			= FIRST_OK + 0
-OK				= FIRST_OK + 1
-#==========================================================================
-FIRST_ERROR		= 128
-#--------------------------------------------------------------------------
-FILENOTFOUND	= FIRST_ERROR + 0
-FILEIO			= FIRST_ERROR + 1
-OUTOFMEMORY		= FIRST_ERROR + 2
+PING				= FIRST_COMMAND + 0
+CHROOT				= FIRST_COMMAND + 1
+MV					= FIRST_COMMAND + 2
+RM					= FIRST_COMMAND + 3
+MALLOC				= FIRST_COMMAND + 4
+FREE				= FIRST_COMMAND + 5
+DOWNLOAD			= FIRST_COMMAND + 6
+UNPACK				= FIRST_COMMAND + 7
+OPEN				= FIRST_COMMAND + 8
+CREATE				= FIRST_COMMAND + 9
+SEEK				= FIRST_COMMAND + 10
+READ				= FIRST_COMMAND + 11
+WRITE				= FIRST_COMMAND + 12
+CLOSE				= FIRST_COMMAND + 13
 #==========================================================================
 
 
+#==========================================================================
+FIRST_OK			= 0
 #--------------------------------------------------------------------------
+PONG				= FIRST_OK + 0
+OK					= FIRST_OK + 1
+#==========================================================================
+FIRST_ERROR			= 128
+#--------------------------------------------------------------------------
+DATA_ERROR			= FIRST_ERROR + 0
+FILENOTFOUND_ERROR	= FIRST_ERROR + 1
+FILEIO_ERROR		= FIRST_ERROR + 2
+OUTOFMEMORY_ERROR	= FIRST_ERROR + 3
+#==========================================================================
+
+
+#==========================================================================
 COMMANDS = (
-#--------------------------------------------------------------------------
+#==========================================================================
 	PING,
 	CHROOT,
 	MV,
@@ -71,84 +75,87 @@ COMMANDS = (
 	CLOSE
 )
 
-#--------------------------------------------------------------------------
+#==========================================================================
 RESULTS_OK = (
-#--------------------------------------------------------------------------
+#==========================================================================
 	PONG,
 	OK
 )
 
-#--------------------------------------------------------------------------
+#==========================================================================
 RESULTS_ERROR = (
-#--------------------------------------------------------------------------
-	FILENOTFOUND,
-	FILEIO,
-	OUTOFMEMORY
+#==========================================================================
+	DATA_ERROR,
+	FILENOTFOUND_ERROR,
+	FILEIO_ERROR,
+	OUTOFMEMORY_ERROR
 )
 
-#--------------------------------------------------------------------------
+#==========================================================================
 COMMANDS_NAME = {
-#--------------------------------------------------------------------------
-	PING			: 'ping',
-	CHROOT			: 'chroot',
-	MV				: 'mv',
-	RM				: 'rm',
-	MALLOC			: 'malloc',
-	FREE			: 'free',
-	DOWNLOAD		: 'download',
-	UNPACK			: 'unpack',
-	OPEN			: 'open',
-	CREATE			: 'create',
-	SEEK			: 'seek',
-	READ			: 'read',
-	WRITE			: 'write',
-	CLOSE			: 'close'
+#==========================================================================
+	PING				: 'ping',
+	CHROOT				: 'chroot',
+	MV					: 'mv',
+	RM					: 'rm',
+	MALLOC				: 'malloc',
+	FREE				: 'free',
+	DOWNLOAD			: 'download',
+	UNPACK				: 'unpack',
+	OPEN				: 'open',
+	CREATE				: 'create',
+	SEEK				: 'seek',
+	READ				: 'read',
+	WRITE				: 'write',
+	CLOSE				: 'close'
 }
 
-#--------------------------------------------------------------------------
+#==========================================================================
 RESULTS_NAME = {
-#--------------------------------------------------------------------------
-	PONG			: 'pong',
-	OK				: 'ok',
-	FILENOTFOUND	: 'filenotfound',
-	FILEIO			: 'fileio',
-	OUTOFMEMORY		: 'outofmemory'
+#==========================================================================
+	PONG				: 'pong',
+	OK					: 'ok',
+	DATA_ERROR			: 'checksum_error',
+	FILENOTFOUND_ERROR	: 'filenotfound_error',
+	FILEIO_ERROR		: 'fileio_error',
+	OUTOFMEMORY_ERROR	: 'outofmemory_error'
 }
 
-#--------------------------------------------------------------------------
+#==========================================================================
 COMMANDS_OPCODE = dict(map(lambda x: (x[1], x[0]), COMMANDS_NAME.iteritems()))
 RESULTS_OPCODE  = dict(map(lambda x: (x[1], x[0]), RESULTS_NAME.iteritems()))
-#--------------------------------------------------------------------------
+#==========================================================================
 
 # see data.py for formats specifications
 
-#--------------------------------------------------------------------------
+#==========================================================================
 COMMANDS_FORMAT = {
-#--------------------------------------------------------------------------
-	PING			: '',		#
-	CHROOT			: 'S',		# pathname
-	MV				: 'SS',		# source_filename,dest_filename
-	RM				: 'S',		# filename
-	MALLOC			: 'I',		# size
-	FREE			: '',		#
-	DOWNLOAD		: 'IHD',	# offset,size,data
-	UNPACK			: 'II',		# source_offset,dest_offset
-	OPEN			: 'S',		# filename
-	CREATE			: 'S',		# filename
-	SEEK			: 'I',		# offset
-	READ			: 'II',		# offset,size
-	WRITE			: 'II',		# offset,size
-	CLOSE			: '',		#
+#==========================================================================
+	PING				: '',		#
+	CHROOT				: 'S',		# pathname
+	MV					: 'SS',		# source_filename,dest_filename
+	RM					: 'S',		# filename
+	MALLOC				: 'I',		# size
+	FREE				: '',		#
+	DOWNLOAD			: 'IHD',	# offset,size,data
+	UNPACK				: 'II',		# source_offset,dest_offset
+	OPEN				: 'S',		# filename
+	CREATE				: 'S',		# filename
+	SEEK				: 'I',		# offset
+	READ				: 'II',		# offset,size
+	WRITE				: 'II',		# offset,size
+	CLOSE				: ''		#
 }
 
-#--------------------------------------------------------------------------
+#==========================================================================
 RESULTS_FORMAT = {
-#--------------------------------------------------------------------------
-	PONG			: '',		#
-	OK				: '',		#
-	FILENOTFOUND	: 'S',		# filename
-	FILEIO			: 'S',		# filename
-	OUTOFMEMORY		: 'I',		# biggest block available
+#==========================================================================
+	PONG				: '',		#
+	OK					: '',		#
+	DATA_ERROR			: '',		#
+	FILENOTFOUND_ERROR	: '',		#
+	FILEIO_ERROR		: '',		#
+	OUTOFMEMORY_ERROR	: ''		#
 }
 
 
