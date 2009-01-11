@@ -143,13 +143,6 @@ class Command ( packet.Packet ):
 		return data.unpack_readable(l_format, self.get_data())
 
 	#----------------------------------------------------------------------
-	def set_running_cb  ( self, p_func ): self.m_running_cb  = p_func
-	def set_aborted_cb  ( self, p_func ): self.m_aborted_cb  = p_func
-	def set_timeout_cb  ( self, p_func ): self.m_timeout_cb  = p_func
-	def set_finished_cb ( self, p_func ): self.m_finished_cb = p_func
-	#----------------------------------------------------------------------
-
-	#----------------------------------------------------------------------
 	def set_callbacks ( self, p_callbacks ):
 	#----------------------------------------------------------------------
 
