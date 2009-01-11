@@ -114,7 +114,7 @@ class Packet:
 		l_header = {
 			'tag'    : self.TAG,
 			'opcode' : self.m_opcode,
-			'crc8'   : self.__crc8(self.m_data)
+			'crc8'   : self.__crc8(self.m_data),
 			'length' : len(self.m_data)
 		}
 
