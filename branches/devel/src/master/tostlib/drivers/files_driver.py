@@ -21,24 +21,21 @@
 #==========================================================================
 
 
-import os
-
-from base_driver import BufferedReadDriver, BufferedWriteDriver
+from base_driver import BaseDriver
 
 
 #==========================================================================
-class FilesDriver ( BufferedReadDriver, BufferedWriteDriver ):
+class FilesDriver ( BaseDriver ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
-	def __init__ ( self, p_configuration ):
+	def __init__ ( self, p_config ):
 	#----------------------------------------------------------------------
 
-		BufferedReadDriver.__init__(self)
-		BufferedWriteDriver.__init__(self)
+		BaseDriver.__init__(self, p_config)
 
-		self.m_input_path  = p_configuration.get_option_value('drivers', 'files_driver.input')
-		self.m_output_path = p_configuration.get_option_value('drivers', 'files_driver.output')
+		self.m_input_path  = p_config.get_option_value('drivers', 'files_driver.input')
+		self.m_output_path = p_config.get_option_value('drivers', 'files_driver.output')
 
 		self.m_input_handle  = None
 		self.m_output_handle = None
@@ -59,19 +56,13 @@ class FilesDriver ( BufferedReadDriver, BufferedWriteDriver ):
 			self.m_output_handle = None
 			return False
 
-		BufferedReadDriver.open(self, self.m_input_handle)
-		BufferedWriteDriver.open(self, self.m_output_handle)
-
-		return True
+		return BaseDriver.open(self, self.m_input_handle, self.m_output_handle)
 
 	#----------------------------------------------------------------------
 	def close ( self ):
 	#----------------------------------------------------------------------
 
-		l_ret = True
-
-		BufferedReadDriver.close(self)
-		BufferedWriteDriver.close(self)
+		l_ret = BaseDriver.close(self)
 
 		if self.m_input_handle != None:
 			try:

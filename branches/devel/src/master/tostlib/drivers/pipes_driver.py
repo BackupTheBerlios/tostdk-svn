@@ -23,21 +23,20 @@
 
 import subprocess
 
-from base_driver import BufferedReadDriver, BufferedWriteDriver
+from base_driver import BaseDriver
 
 
 #==========================================================================
-class PipesDriver ( BufferedReadDriver, BufferedWriteDriver ):
+class PipesDriver ( BaseDriver ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
-	def __init__ ( self, p_configuration ):
+	def __init__ ( self, p_config ):
 	#----------------------------------------------------------------------
 
-		BufferedReadDriver.__init__(self)
-		BufferedWriteDriver.__init__(self)
+		BaseDriver.__init__(self, p_config)
 
-		self.m_command = p_configuration.get_option_value('drivers', 'pipes_driver.command')
+		self.m_command = p_config.get_option_value('drivers', 'pipes_driver.command')
 		self.m_popen   = None
 
 	#----------------------------------------------------------------------
@@ -56,18 +55,13 @@ class PipesDriver ( BufferedReadDriver, BufferedWriteDriver ):
 			self.m_popen = None
 			return False
 
-		BufferedReadDriver.open(self, self.m_popen.stdout)
-		BufferedWriteDriver.open(self, self.m_popen.stdin)
-		return True
+		return BaseDriver.open(self, self.m_popen.stdout, self.m_popen.stdin)
 
 	#----------------------------------------------------------------------
 	def close ( self ):
 	#----------------------------------------------------------------------
 
-		l_ret = True
-
-		BufferedReadDriver.close(self)
-		BufferedWriteDriver.close(self)
+		l_ret = BaseDriver.close(self)
 
 		if self.m_popen:
 			try:
@@ -78,20 +72,6 @@ class PipesDriver ( BufferedReadDriver, BufferedWriteDriver ):
 		self.m_popen = None
 
 		return l_ret
-
-	#----------------------------------------------------------------------
-	def can_read  ( self ):
-	#----------------------------------------------------------------------
-
-		return (self.m_popen.pool() == None and \
-				BufferedReadDriver.can_read(self))
-
-	#----------------------------------------------------------------------
-	def can_write ( self ):
-	#----------------------------------------------------------------------
-
-		return (self.m_popen.pool() == None and \
-				BufferedWriteDriver.can_write(self))
 
 
 #==========================================================================
