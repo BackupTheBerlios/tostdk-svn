@@ -28,6 +28,7 @@ import logging
 import configuration
 import cache
 import journal
+import opcodes
 import command
 import master
 import queue
@@ -467,11 +468,6 @@ class Project:
 		if l_journal_entry:
 			l_journal_entry.unlock()
 
-		else:
-			logging.message("Retrying...")
-			p_command.cleanup()
-			return command_queue.CommandQueue.get_instance().insert(p_command)
-
 		return False
 
 	#----------------------------------------------------------------------
@@ -527,15 +523,15 @@ class Project:
 		if l_string:
 			logging.message('\t' + l_string)
 
+		if p_command.get_result().get_opcode() == opcodes.DATA_ERROR:
+			logging.message("Retrying...")
+			p_command.cleanup()
+			return command_queue.CommandQueue.get_instance().insert(p_command)
+
 		l_journal_entry = self.__journal_entry(p_command)
 
 		if l_journal_entry:
 			l_journal_entry.unlock()
-
-		else:
-			logging.message("Retrying...")
-			p_command.cleanup()
-			return command_queue.CommandQueue.get_instance().insert(p_command)
 
 		return False
 
