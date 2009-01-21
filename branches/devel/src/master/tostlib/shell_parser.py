@@ -21,6 +21,9 @@
 #==========================================================================
 
 
+import logging
+
+
 #======================================================================
 TYPE_BOOL   = 0
 TYPE_INT    = 1
@@ -28,27 +31,6 @@ TYPE_FLOAT  = 2
 TYPE_STRING = 3
 #======================================================================
 
-
-#======================================================================
-def __from_string ( p_type, p_string ):
-#======================================================================
-
-	if p_type == TYPE_BOOL:
-		return [False, True][p_string.lower() in ('true', 'on')]
-
-	elif p_type == TYPE_INT:
-		return int(p_string)
-
-	elif p_type == TYPE_FLOAT:
-		return float(p_string)
-
-	return p_string
-
-#======================================================================
-def __to_string ( p_type, p_value ):
-#======================================================================
-
-	return str(p_value)
 
 #======================================================================
 class ShellOption:
@@ -220,19 +202,88 @@ class ShellParser:
 	def parse_short_options ( self, p_argv, p_parameters, p_options ):
 	#----------------------------------------------------------------------
 
-		pass
+		l_string  = p_argv.pop(0)[1:]
+		l_has_arg = False
+
+		for l_short in l_string:
+
+			l_short_def = p_parameters.get_short_option(l_short)
+
+			if not l_short_def:
+				logging.output('Unknow option: -' + l_short)
+				return False
+
+			l_type = l_short_def.get_type()
+
+			if l_type == TYPE_BOOL:
+				l_value = not l_short_def.get_default()
+
+			elif not p_argv:
+				logging.output('Option -' + l_short + ' need an argument.')
+				return False
+
+			elif l_has_arg:
+				logging.output('Invalid option string: ' + l_string)
+				return False
+
+			else:
+				l_arg     = p_argv.pop(0)
+				l_value   = self.__from_string(l_type, l_arg)
+				l_has_arg = True
+
+			p_options[l_short_def.get_name()] = l_value
+
+		return True
 
 	#----------------------------------------------------------------------
 	def parse_long_option ( self, p_argv, p_parameters, p_options ):
 	#----------------------------------------------------------------------
 
-		pass
+		l_long = p_argv.pop(0)[2:]
+		l_long_def = p_parameters.get_long_option(l_long)
+
+		if not l_long_def:
+			logging.output('Unknow option: --' + l_long)
+			return False
+
+		l_type = l_long_def.get_type()
+
+		if l_type == TYPE_BOOL:
+			l_value = not l_long_def.get_default()
+
+		elif not p_argv:
+			logging.output('Option --' + l_long + ' need an argument.')
+			return False
+
+		else:
+			l_arg = p_argv.pop(0)
+			l_value = self.__from_string(l_type, l_arg)
+
+		p_options[l_long_def.get_name()] = l_value
+
+		return True
 
 	#----------------------------------------------------------------------
 	def parse_argument ( self, p_argv, p_parameters, p_index, p_arguments ):
 	#----------------------------------------------------------------------
 
 		pass
+
+	#----------------------------------------------------------------------
+	def __from_string ( self, p_type, p_string ):
+	#----------------------------------------------------------------------
+
+		if p_type == TYPE_BOOL:
+			return [False, True][p_string.lower() in ('true', 'on')]
+
+		elif p_type == TYPE_INT:
+			return int(p_string)
+
+		elif p_type == TYPE_FLOAT:
+			return float(p_string)
+
+		return p_string
+
 
 #==========================================================================
 # End
