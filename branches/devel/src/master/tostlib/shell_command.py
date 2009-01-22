@@ -48,7 +48,7 @@ class ShellCommand:
 
 	#----------------------------------------------------------------------
 	@classmethod
-	def execute ( cls, p_options, p_arguments ):
+	def execute ( cls, p_args ):
 	#----------------------------------------------------------------------
 
 		raise NotImplementedError

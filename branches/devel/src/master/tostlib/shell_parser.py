@@ -61,7 +61,7 @@ class ShellArgument:
 #======================================================================
 
 	#------------------------------------------------------------------
-	def __init__ ( self, p_type, p_name, p_required ):
+	def __init__ ( self, p_type, p_name ):
 	#------------------------------------------------------------------
 
 		self.m_type = p_type
@@ -91,8 +91,11 @@ class ShellParameters:
 	def get_argument ( self, p_index ):
 	#------------------------------------------------------------------
 
-		if p_index >= len(self.m_arguments):
+		if not self.m_arguments:
 			return None
+
+		if p_index >= len(self.m_arguments):
+			return self.m_arguments[-1]
 
 		return self.m_arguments[p_index]
 
@@ -125,25 +128,25 @@ class ShellParser:
 #==========================================================================
 
 	#----------------------------------------------------------------------
-	def __init__ ( self, p_general_parameters ):
+	def __init__ ( self, p_general_parameters, p_commands_parameters ):
 	#----------------------------------------------------------------------
 
-		self.m_general_parameters = p_general_parameters
+		self.m_general_parameters  = p_general_parameters
+		self.m_commands_parameters = p_commands_parameters
 
 	#----------------------------------------------------------------------
-	def parse ( self, p_commands_parameters, p_argv ):
+	def parse ( self, p_argv ):
 	#----------------------------------------------------------------------
 
 		l_argv = p_argv[:]
 
-		l_general_options   = {}
-		l_command_options   = {}
-		l_command_arguments = []
+		l_general_args = {}
+		l_command_args = {}
 
 		l_command    = None
 		l_parameters = self.m_general_parameters
 
-		self.set_default_options(l_parameters, l_general_options)
+		self.set_default_options(l_parameters, l_general_args)
 
 		l_arg_index = 0
 		l_ok        = True
@@ -157,38 +160,37 @@ class ShellParser:
 			if l_word.beginswith('--'):
 				if l_command:
 					l_ok = self.parse_long_option(l_argv, l_parameters,
-													l_command_options)
+													l_command_args)
 				else:
 					l_ok = self.parse_long_option(l_argv, l_parameters,
-													l_general_options)
+													l_general_args)
 
 			elif l_word.beginswith('-'):
 				if l_command:
 					l_ok = self.parse_short_options(l_argv, l_parameters,
-													l_command_options)
+													l_command_args)
 				else:
 					l_ok = self.parse_short_options(l_argv, l_parameters,
-													l_general_options)
+													l_general_args)
 
 			elif not l_command:
-				if p_commands_parameters.has_key(l_word):
+				if self.m_commands_parameters.has_key(l_word):
 					l_command    = l_word
-					l_parameters = p_commands_parameters[l_word]
-					self.set_default_options(l_parameters, l_command_options)
+					l_parameters = self.m_commands_parameters[l_word]
+					self.set_default_options(l_parameters, l_command_args)
 					del l_argv[0]
 				else:
 					l_ok = False
 
 			else:
 				l_ok = self.parse_argument(l_argv, l_parameters, l_arg_index
-													l_command_arguments)
+													l_command_args)
 				l_arg_index += 1
 
-		return (l_ok, l_general_options,
-					l_command, l_command_options, l_command_arguments)
+		return (l_ok, l_general_args, l_command, l_command_args)
 
 	#----------------------------------------------------------------------
-	def set_default_options ( self, p_parameters, p_options ):
+	def set_default_options ( self, p_parameters, p_args ):
 	#----------------------------------------------------------------------
 
 		for l_option_def in p_parameters.get_options():
@@ -196,10 +198,10 @@ class ShellParser:
 			l_name    = l_option_def.get_name()
 			l_default = l_option_def.get_default()
 
-			p_options[l_name] = l_default
+			p_args[l_name] = l_default
 
 	#----------------------------------------------------------------------
-	def parse_short_options ( self, p_argv, p_parameters, p_options ):
+	def parse_short_options ( self, p_argv, p_parameters, p_args ):
 	#----------------------------------------------------------------------
 
 		l_string  = p_argv.pop(0)[1:]
@@ -231,12 +233,12 @@ class ShellParser:
 				l_value   = self.__from_string(l_type, l_arg)
 				l_has_arg = True
 
-			p_options[l_short_def.get_name()] = l_value
+			p_args[l_short_def.get_name()] = l_value
 
 		return True
 
 	#----------------------------------------------------------------------
-	def parse_long_option ( self, p_argv, p_parameters, p_options ):
+	def parse_long_option ( self, p_argv, p_parameters, p_args ):
 	#----------------------------------------------------------------------
 
 		l_long = p_argv.pop(0)[2:]
@@ -259,15 +261,31 @@ class ShellParser:
 			l_arg = p_argv.pop(0)
 			l_value = self.__from_string(l_type, l_arg)
 
-		p_options[l_long_def.get_name()] = l_value
+		p_args[l_long_def.get_name()] = l_value
 
 		return True
 
 	#----------------------------------------------------------------------
-	def parse_argument ( self, p_argv, p_parameters, p_index, p_arguments ):
+	def parse_argument ( self, p_argv, p_parameters, p_index, p_args ):
 	#----------------------------------------------------------------------
 
-		pass
+		l_arg = p_argv.pop(0)
+		l_arg_def = p_parameters.get_argument(p_index)
+
+		if not l_arg_def:
+			logging.output('Unexpected argument: ' + l_arg)
+			return False
+
+		l_name  = l_arg_def.get_name()
+		l_value = self.__from_string(l_arg_def.get_type(), l_arg)
+
+		if p_args.has_key(l_name):
+			if isinstance(p_args[l_name], list):
+				p_args[l_name].append(l_value)
+			else:
+				p_args[l_name] = [p_args[l_name], l_value]
+
+		return True
 
 	#----------------------------------------------------------------------
 	def __from_string ( self, p_type, p_string ):
