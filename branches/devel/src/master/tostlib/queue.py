@@ -48,6 +48,8 @@ class Queue ( singleton.Singleton ):
 	def __init__ ( self ):
 	#----------------------------------------------------------------------
 
+		singleton.Singleton.__init__(self)
+
 		self.m_queue   = []
 
 		self.m_state   = self.STATE_IDLE

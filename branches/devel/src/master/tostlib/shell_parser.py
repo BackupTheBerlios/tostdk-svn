@@ -37,7 +37,7 @@ class ShellOption:
 #======================================================================
 
 	#------------------------------------------------------------------
-	def __init__ ( self, p_type, p_name, p_short, p_long, p_default, p_help )
+	def __init__ ( self, p_type, p_name, p_short, p_long, p_default, p_descr ):
 	#------------------------------------------------------------------
 
 		self.m_type    = p_type
@@ -45,7 +45,7 @@ class ShellOption:
 		self.m_short   = p_short
 		self.m_long    = p_long
 		self.m_default = p_default
-		self.m_help    = p_help
+		self.m_descr   = p_descr
 
 	#------------------------------------------------------------------
 	def get_type    ( self ): return self.m_type
@@ -53,38 +53,49 @@ class ShellOption:
 	def get_short   ( self ): return self.m_short
 	def get_long    ( self ): return self.m_long
 	def get_default ( self ): return self.m_default
-	def get_help    ( self ): return self.m_help
+	def get_descr   ( self ): return self.m_descr
 	#------------------------------------------------------------------
+
 
 #======================================================================
 class ShellArgument:
 #======================================================================
 
 	#------------------------------------------------------------------
-	def __init__ ( self, p_type, p_name ):
+	def __init__ ( self, p_type, p_name, p_descr ):
 	#------------------------------------------------------------------
 
-		self.m_type = p_type
-		self.m_name = p_name
+		self.m_type  = p_type
+		self.m_name  = p_name
+		self.m_descr = p_descr
 
 	#------------------------------------------------------------------
-	def get_type ( self ): return self.m_type
-	def get_name ( self ): return self.m_name
+	def get_type  ( self ): return self.m_type
+	def get_name  ( self ): return self.m_name
+	def get_descr ( self ): return self.m_descr
 	#------------------------------------------------------------------
+
 
 #======================================================================
 class ShellParameters:
 #======================================================================
 
 	#------------------------------------------------------------------
-	def __init__ ( self, p_options = {}, p_arguments = [] ):
+	def __init__ ( self, p_options = None, p_arguments = None ):
 	#------------------------------------------------------------------
 
-		self.m_options     = p_options
-		self.m_arguments   = p_arguments
+		self.m_options   = p_options
+		self.m_arguments = p_arguments
+
+		if self.m_options == None:
+			self.m_options = []
+
+		if self.m_arguments == None:
+			self.m_arguments = []
 
 	#------------------------------------------------------------------
-	def get_options ( self ): return self.m_options
+	def get_options   ( self ): return self.m_options
+	def get_arguments ( self ): return self.m_arguments
 	#------------------------------------------------------------------
 
 	#------------------------------------------------------------------
@@ -107,6 +118,7 @@ class ShellParameters:
 
 		for l_option_def in self.m_options:
 			if l_option_def.get_short() == p_short:
+				l_option = l_option_def
 				break
 
 		return l_option
@@ -119,9 +131,11 @@ class ShellParameters:
 
 		for l_option_def in self.m_options:
 			if l_option_def.get_long() == p_long:
+				l_option = l_option_def
 				break
 
 		return l_option
+
 
 #==========================================================================
 class ShellParser:
@@ -133,6 +147,21 @@ class ShellParser:
 
 		self.m_general_parameters  = p_general_parameters
 		self.m_commands_parameters = p_commands_parameters
+
+	#----------------------------------------------------------------------
+	def get_general_parameters ( self ):
+	#----------------------------------------------------------------------
+
+		return self.m_general_parameters
+
+	#----------------------------------------------------------------------
+	def get_command_parameters ( self, p_command ):
+	#----------------------------------------------------------------------
+
+		if p_command in self.m_commands_parameters:
+			return self.m_commands_parameters[p_command]
+
+		return None
 
 	#----------------------------------------------------------------------
 	def parse ( self, p_argv ):
@@ -157,7 +186,7 @@ class ShellParser:
 			if not l_word:
 				continue
 
-			if l_word.beginswith('--'):
+			if l_word.startswith('--'):
 				if l_command:
 					l_ok = self.parse_long_option(l_argv, l_parameters,
 													l_command_args)
@@ -165,7 +194,7 @@ class ShellParser:
 					l_ok = self.parse_long_option(l_argv, l_parameters,
 													l_general_args)
 
-			elif l_word.beginswith('-'):
+			elif l_word.startswith('-'):
 				if l_command:
 					l_ok = self.parse_short_options(l_argv, l_parameters,
 													l_command_args)
@@ -183,7 +212,7 @@ class ShellParser:
 					l_ok = False
 
 			else:
-				l_ok = self.parse_argument(l_argv, l_parameters, l_arg_index
+				l_ok = self.parse_argument(l_argv, l_parameters, l_arg_index,
 													l_command_args)
 				l_arg_index += 1
 
@@ -284,6 +313,8 @@ class ShellParser:
 				p_args[l_name].append(l_value)
 			else:
 				p_args[l_name] = [p_args[l_name], l_value]
+		else:
+			p_args[l_name] = l_value
 
 		return True
 

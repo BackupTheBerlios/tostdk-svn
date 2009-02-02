@@ -22,6 +22,9 @@
 #==========================================================================
 
 import tostlib.shell
+import tostlib.shell_misc
+
+tostlib.shell_misc.register()
 
 tostlib.shell.main()
 
