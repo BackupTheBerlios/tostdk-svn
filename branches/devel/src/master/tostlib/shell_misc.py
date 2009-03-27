@@ -21,6 +21,7 @@
 #==========================================================================
 
 
+import os
 import version
 import shell
 import shell_parser
@@ -35,6 +36,7 @@ def register ( ):
 	shell.Shell.register_command(ShellUsage)
 	shell.Shell.register_command(ShellLicense)
 	shell.Shell.register_command(ShellHelp)
+	shell.Shell.register_command(ShellShell)
 
 
 #==========================================================================
@@ -205,6 +207,51 @@ class ShellHelp ( shell_command.ShellCommand ):
 		print
 
 		return 0
+
+#==========================================================================
+class ShellShell ( shell_command.ShellCommand ):
+#==========================================================================
+
+	#----------------------------------------------------------------------
+	@classmethod
+	def get_name ( cls ):
+	#----------------------------------------------------------------------
+
+		return 'shell'
+
+	#----------------------------------------------------------------------
+	@classmethod
+	def get_description ( cls ):
+	#----------------------------------------------------------------------
+
+		return 'Execute a shell command.'
+
+	#----------------------------------------------------------------------
+	@classmethod
+	def get_parameters ( cls ):
+	#----------------------------------------------------------------------
+
+		return shell_parser.ShellParameters(None, (
+			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'command',
+				'Command line.'),
+		))
+
+	#----------------------------------------------------------------------
+	def execute ( self, p_args ):
+	#----------------------------------------------------------------------
+
+		if not ('command' in p_args):
+			print "No command to execute."
+			return 2
+
+		l_args = p_args['command']
+
+		if isinstance(l_args, list):
+			l_cmd = ' '.join(l_args)
+		else:
+			l_cmd = l_args
+
+		return os.system(l_cmd)
 
 
 #==========================================================================
