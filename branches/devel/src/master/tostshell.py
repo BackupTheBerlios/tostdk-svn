@@ -23,8 +23,10 @@
 
 import tostlib.shell
 import tostlib.shell_misc
+import tostlib.shell_create
 
 tostlib.shell_misc.register()
+tostlib.shell_create.register()
 
 tostlib.shell.main()
 
