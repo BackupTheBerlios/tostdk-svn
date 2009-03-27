@@ -655,7 +655,7 @@ class Configuration ( singleton.Singleton ):
 		for l_section in self.m_sections.iterkeys():
 			l_section_started = False
 
-			for l_option in l_section.iterkeys():
+			for l_option in self.m_sections[l_section].iterkeys():
 
 				if self.m_sections[l_section][l_option]['level'] != p_level:
 					continue
@@ -670,7 +670,7 @@ class Configuration ( singleton.Singleton ):
 
 				l_type   = CONFIGURATION[l_section][l_option]['type']
 				l_string = l_type['write'](self.m_sections[l_section][l_option]['value'])
-				l_hande.write(l_option + ' = ' + l_string + os.linesep)
+				l_handle.write(l_option + ' = ' + l_string + os.linesep)
 
 			if l_section_started:
 				l_handle.write(os.linesep)
