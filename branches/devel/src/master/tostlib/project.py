@@ -150,7 +150,8 @@ class Project:
 				logging.error("Can't create directory: ", l_cache_path)
 				return None
 
-		if not l_config.set_option_value('project', 'slave_path', p_slave_path):
+		if not l_config.set_option_value(configuration.LEVEL_PROJECT, 'project',
+											'slave_path', p_slave_path):
 			return None
 
 		if not l_config.save(l_master_path):
