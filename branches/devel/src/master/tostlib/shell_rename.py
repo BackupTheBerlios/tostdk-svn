@@ -1,6 +1,6 @@
 #==========================================================================
-# tostdk :: tostlib :: shell_create.py
-# Shell project creation command
+# tostdk :: tostlib :: shell_rename.py
+# Shell rename command
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz
 #--------------------------------------------------------------------------
@@ -21,21 +21,23 @@
 #==========================================================================
 
 
+import os
+
+import project
 import shell
 import shell_parser
 import shell_command
-import project
 
 
 #==========================================================================
 def register ( ):
 #==========================================================================
 
-	shell.Shell.register_command(ShellCreate)
+	shell.Shell.register_command(ShellRename)
 
 
 #==========================================================================
-class ShellCreate ( shell_command.ShellCommand ):
+class ShellRename ( shell_command.ShellCommand ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
@@ -43,47 +45,63 @@ class ShellCreate ( shell_command.ShellCommand ):
 	def get_name ( cls ):
 	#----------------------------------------------------------------------
 
-		return 'create'
+		return 'rename'
 
 	#----------------------------------------------------------------------
 	@classmethod
 	def get_description ( cls ):
 	#----------------------------------------------------------------------
 
-		return 'Create a new project in the current directory.'
+		return 'Rename files from the current project.'
 
 	#----------------------------------------------------------------------
 	@classmethod
 	def get_parameters ( cls ):
 	#----------------------------------------------------------------------
 
-		return shell_parser.ShellParameters(None, (
-			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'masterpath',
-				'Local path.'),
-			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'slavepath',
-				'Remote path.'),
+		return shell_parser.ShellParameters(
+		(
+			shell_parser.ShellOption(shell_parser.TYPE_BOOL, 'now',
+				'n', 'now',
+				False, "Synchronize immediately."),
+		),
+		(	shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'from',
+				'Name of the file to rename.'),
+			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'to',
+				'New file name.')
 		))
 
 	#----------------------------------------------------------------------
 	def execute ( self, p_args ):
 	#----------------------------------------------------------------------
 
-		if not ('masterpath' in p_args):
-			print "No local path given."
+		if not ('from' in p_args):
+			print "No file name given."
 			return 2
 
-		if not ('slavepath' in p_args):
-			print "No remote path given."
+		if not ('to' in p_args):
+			print "No new file name given."
 			return 2
 
-		l_master_path = p_args['masterpath']
-		l_slave_path  = p_args['slavepath']
+		l_old = p_args['from']
+		l_to  = p_args['to']
 
-		l_project = project.Project.create(l_master_path, l_slave_path)
+		if isinstance(l_to, list):
+			print "Too much parameters."
+			return 2
+
+		l_project = project.Project.open(os.getcwd())
 
 		if l_project == None:
-			print "Can't create project."
+			print "No project found."
 			return 1
+
+		if not l_project.rename_file(l_old, l_new):
+			print "Can't rename", l_old, "to", l_new
+			return 1
+
+		if p_args['now']:
+			l_project.synchronize(True)
 
 		return 0
 

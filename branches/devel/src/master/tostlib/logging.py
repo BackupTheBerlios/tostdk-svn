@@ -96,11 +96,11 @@ def error ( p_string ):
 
 	l_config = configuration.Configuration.get_instance()
 
-	if l_config.get_option_value('general', 'debug'):
-		raise RuntimeError
-
 	if l_config.get_option_value('general', 'verbose'):
 		sys.stderr.write(l_string + os.linesep)
+
+	if l_config.get_option_value('general', 'debug'):
+		raise RuntimeError
 
 
 #==========================================================================

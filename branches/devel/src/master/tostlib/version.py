@@ -24,7 +24,7 @@
 MAJOR    = 0
 MINOR    = 0
 REVISION = 0
-DATE     = "2009-01-17"
+DATE     = "2009-03-28"
 
 VERSION      = str(MAJOR) + '.' + str(MINOR) + '.' + str(REVISION)
 LONG_VERSION = 'ToStDk_' + VERSION + '_' + DATE

@@ -1,6 +1,9 @@
 [x][tostlib] cache / journal version tag
 [x][tostlib] redesign opcodes: remove names, use only constants
 [x][tostlib] handle packet retry when data is corrupted
-[ ][tostlib] make updating files safer
+[ ][tostlib] redesign & rewrite journal
+[ ][tostlib] make updating files safer (master and slave)
 [ ][tostlib] add directories to cache
 [ ][tostlib] remove and rename directories
+
+[ ][all] convert "dict.has_key(key)" to "key in dict"

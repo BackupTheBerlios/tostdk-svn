@@ -1,6 +1,6 @@
 #==========================================================================
-# tostdk :: tostlib :: shell_create.py
-# Shell project creation command
+# tostdk :: tostlib :: shell_sync.py
+# Shell sync command
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz
 #--------------------------------------------------------------------------
@@ -21,6 +21,8 @@
 #==========================================================================
 
 
+import os
+
 import shell
 import shell_parser
 import shell_command
@@ -31,11 +33,11 @@ import project
 def register ( ):
 #==========================================================================
 
-	shell.Shell.register_command(ShellCreate)
+	shell.Shell.register_command(ShellSync)
 
 
 #==========================================================================
-class ShellCreate ( shell_command.ShellCommand ):
+class ShellSync ( shell_command.ShellCommand ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
@@ -43,47 +45,26 @@ class ShellCreate ( shell_command.ShellCommand ):
 	def get_name ( cls ):
 	#----------------------------------------------------------------------
 
-		return 'create'
+		return 'sync'
 
 	#----------------------------------------------------------------------
 	@classmethod
 	def get_description ( cls ):
 	#----------------------------------------------------------------------
 
-		return 'Create a new project in the current directory.'
-
-	#----------------------------------------------------------------------
-	@classmethod
-	def get_parameters ( cls ):
-	#----------------------------------------------------------------------
-
-		return shell_parser.ShellParameters(None, (
-			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'masterpath',
-				'Local path.'),
-			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'slavepath',
-				'Remote path.'),
-		))
+		return 'Synchronize files from the current project.'
 
 	#----------------------------------------------------------------------
 	def execute ( self, p_args ):
 	#----------------------------------------------------------------------
 
-		if not ('masterpath' in p_args):
-			print "No local path given."
-			return 2
-
-		if not ('slavepath' in p_args):
-			print "No remote path given."
-			return 2
-
-		l_master_path = p_args['masterpath']
-		l_slave_path  = p_args['slavepath']
-
-		l_project = project.Project.create(l_master_path, l_slave_path)
+		l_project = project.Project.open(os.getcwd())
 
 		if l_project == None:
-			print "Can't create project."
+			print "No project found."
 			return 1
+
+		l_project.synchronize(True)
 
 		return 0
 

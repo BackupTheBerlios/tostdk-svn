@@ -21,6 +21,7 @@
 #==========================================================================
 
 
+import os
 import sys
 import cmd
 import shlex
@@ -149,7 +150,11 @@ class Shell ( cmd.Cmd, singleton.Singleton ):
 			print 'Unknow command:', p_line
 			return 2
 
-		return self.execute_command(l_command, l_command_args)
+		l_result = self.execute_command(l_command, l_command_args)
+
+		self.prompt = "tostdk: " + os.getcwd() + "> "
+
+		return l_result
 
 	#----------------------------------------------------------------------
 	def execute_command ( self, p_command, p_args = {} ):
@@ -232,7 +237,7 @@ class Shell ( cmd.Cmd, singleton.Singleton ):
 	#----------------------------------------------------------------------
 
 		self.intro  = INTRO
-		self.prompt = "[tostdk]$ "
+		self.prompt = "tostdk: " + os.getcwd() + "> "
 
 		cmd.Cmd.cmdloop(self)
 
@@ -245,6 +250,17 @@ class Shell ( cmd.Cmd, singleton.Singleton ):
 	#----------------------------------------------------------------------
 	def default ( self, p_line ):
 	#----------------------------------------------------------------------
+
+		if not p_line:
+			return False
+
+		if p_line[0] == ':':
+			l_line = p_line[1:]
+
+			if not l_line:
+				return False
+
+			return self.do_shell(l_line)
 
 		self.execute_cmdline(p_line)
 		return False

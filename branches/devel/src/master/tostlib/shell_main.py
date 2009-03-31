@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 #==========================================================================
-# tostdk :: tostshell.py
-# Tostdk shell interface
+# tostdk :: tostlib :: shell_sync.py
+# Shell main
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz
 #--------------------------------------------------------------------------
@@ -21,9 +20,32 @@
 # along with Tostdk.  If not, see <http://www.gnu.org/licenses/>.
 #==========================================================================
 
-import tostlib.shell_main
+import shell
+import shell_misc
+import shell_help
+import shell_config
+import shell_create
+import shell_add
+import shell_remove
+import shell_rename
+import shell_update
+import shell_sync
 
-tostlib.shell_main.main()
+#==========================================================================
+def main ( ):
+#==========================================================================
+
+	shell_misc.register()
+	shell_help.register()
+	shell_config.register()
+	shell_create.register()
+	shell_add.register()
+	shell_remove.register()
+	shell_rename.register()
+	shell_update.register()
+	shell_sync.register()
+
+	shell.main()
 
 #==========================================================================
 # End

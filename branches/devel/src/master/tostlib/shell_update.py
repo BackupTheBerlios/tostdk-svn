@@ -1,6 +1,6 @@
 #==========================================================================
-# tostdk :: tostlib :: shell_create.py
-# Shell project creation command
+# tostdk :: tostlib :: shell_update.py
+# Shell update command
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz
 #--------------------------------------------------------------------------
@@ -21,6 +21,8 @@
 #==========================================================================
 
 
+import os
+
 import shell
 import shell_parser
 import shell_command
@@ -31,11 +33,11 @@ import project
 def register ( ):
 #==========================================================================
 
-	shell.Shell.register_command(ShellCreate)
+	shell.Shell.register_command(ShellUpdate)
 
 
 #==========================================================================
-class ShellCreate ( shell_command.ShellCommand ):
+class ShellUpdate ( shell_command.ShellCommand ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
@@ -43,47 +45,43 @@ class ShellCreate ( shell_command.ShellCommand ):
 	def get_name ( cls ):
 	#----------------------------------------------------------------------
 
-		return 'create'
+		return 'update'
 
 	#----------------------------------------------------------------------
 	@classmethod
 	def get_description ( cls ):
 	#----------------------------------------------------------------------
 
-		return 'Create a new project in the current directory.'
+		return 'Update modified files from the current project.'
 
 	#----------------------------------------------------------------------
 	@classmethod
 	def get_parameters ( cls ):
 	#----------------------------------------------------------------------
 
-		return shell_parser.ShellParameters(None, (
-			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'masterpath',
-				'Local path.'),
-			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'slavepath',
-				'Remote path.'),
-		))
+		return shell_parser.ShellParameters(
+		(
+			shell_parser.ShellOption(shell_parser.TYPE_BOOL, 'now',
+				'n', 'now',
+				False, "Synchronize immediately."),
+		), None)
 
 	#----------------------------------------------------------------------
 	def execute ( self, p_args ):
 	#----------------------------------------------------------------------
 
-		if not ('masterpath' in p_args):
-			print "No local path given."
-			return 2
-
-		if not ('slavepath' in p_args):
-			print "No remote path given."
-			return 2
-
-		l_master_path = p_args['masterpath']
-		l_slave_path  = p_args['slavepath']
-
-		l_project = project.Project.create(l_master_path, l_slave_path)
+		l_project = project.Project.open(os.getcwd())
 
 		if l_project == None:
-			print "Can't create project."
+			print "No project found."
 			return 1
+
+		if not l_project.update_files():
+			print "Can't update files."
+			return 1
+
+		if p_args['now']:
+			l_project.synchronize(True)
 
 		return 0
 

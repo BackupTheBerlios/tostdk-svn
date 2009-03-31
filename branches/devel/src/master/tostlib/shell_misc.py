@@ -35,8 +35,8 @@ def register ( ):
 	shell.Shell.register_command(ShellVersion)
 	shell.Shell.register_command(ShellUsage)
 	shell.Shell.register_command(ShellLicense)
-	shell.Shell.register_command(ShellHelp)
 	shell.Shell.register_command(ShellShell)
+	shell.Shell.register_command(ShellCd)
 
 
 #==========================================================================
@@ -117,98 +117,6 @@ class ShellLicense ( shell_command.ShellCommand ):
 
 
 #==========================================================================
-class ShellHelp ( shell_command.ShellCommand ):
-#==========================================================================
-
-	#----------------------------------------------------------------------
-	@classmethod
-	def get_name ( cls ):
-	#----------------------------------------------------------------------
-
-		return 'help'
-
-	#----------------------------------------------------------------------
-	@classmethod
-	def get_description ( cls ):
-	#----------------------------------------------------------------------
-
-		return 'Prints help.'
-
-	#----------------------------------------------------------------------
-	@classmethod
-	def get_parameters ( cls ):
-	#----------------------------------------------------------------------
-
-		return shell_parser.ShellParameters(None, (
-			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'command',
-				'Command name or nothing to list all available commands.'),
-		))
-
-	#----------------------------------------------------------------------
-	def execute ( self, p_args ):
-	#----------------------------------------------------------------------
-
-		if 'command' in p_args:
-			return self.__help_command(p_args['command'])
-		else:
-			return self.__list_commands()
-
-	#----------------------------------------------------------------------
-	def __help_command ( self, p_command ):
-	#----------------------------------------------------------------------
-
-		l_shell = shell.Shell.get_instance()
-
-		if not l_shell.has_command(p_command):
-			print 'Unknow command:', p_command
-			return 2
-
-		l_command = l_shell.get_command(p_command)
-		l_params  = l_shell.get_parser().get_command_parameters(p_command)
-		l_options = l_params.get_options()
-		l_args    = l_params.get_arguments()
-
-		print '\n' + l_command.get_description()
-
-		l_usage = ' ' + l_command.get_name()
-		if l_options:
-			l_usage += ' [options]'
-		if l_args:
-			for l_arg in l_args:
-				l_usage += ' ' + l_arg.get_name()
-
-		print '\nUsage:\n'
-		print l_usage
-
-		if l_options:
-			print '\nOptions:\n'
-			for l_opt in l_options:
-				print ' -' + l_opt.get_short() + ', --' + l_opt.get_long() + \
-					'(' + str(l_opt.get_default()) + ') : ' + l_opt.get_descr()
-
-		if l_args:
-			print '\nArguments:\n'
-			for l_arg in l_args:
-				print ' ' + l_arg.get_name() + ' : ' + l_arg.get_descr()
-
-		print
-		return 0
-
-	#----------------------------------------------------------------------
-	def __list_commands ( self ):
-	#----------------------------------------------------------------------
-
-		l_shell    = shell.Shell.get_instance()
-		l_commands = l_shell.get_commands()
-
-		print
-		for l_name, l_command in sorted(l_commands.iteritems()):
-			print ' ' + l_name + ':', l_command.get_description()
-		print
-
-		return 0
-
-#==========================================================================
 class ShellShell ( shell_command.ShellCommand ):
 #==========================================================================
 
@@ -252,6 +160,67 @@ class ShellShell ( shell_command.ShellCommand ):
 			l_cmd = l_args
 
 		return os.system(l_cmd)
+
+
+#==========================================================================
+class ShellCd ( shell_command.ShellCommand ):
+#==========================================================================
+
+	#----------------------------------------------------------------------
+	@classmethod
+	def get_name ( cls ):
+	#----------------------------------------------------------------------
+
+		return 'cd'
+
+	#----------------------------------------------------------------------
+	@classmethod
+	def get_description ( cls ):
+	#----------------------------------------------------------------------
+
+		return 'Change current directory.'
+
+	#----------------------------------------------------------------------
+	@classmethod
+	def get_parameters ( cls ):
+	#----------------------------------------------------------------------
+
+		return shell_parser.ShellParameters(None, (
+			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'directory',
+				'New directory.'),
+		))
+
+	#----------------------------------------------------------------------
+	def execute ( self, p_args ):
+	#----------------------------------------------------------------------
+
+		if not ('directory' in p_args):
+			print "No directory specified."
+			return 2
+
+		l_path = p_args['directory']
+
+		if isinstance(l_path, list):
+			print "Unquoted path with spaces."
+			return 2
+
+		if os.path.isabs(l_path):
+			l_path = os.path.normpath(l_path)
+
+		else:
+			l_path = os.path.abspath(l_path)
+
+		if not os.path.exists(l_path):
+			print "Path doesn't exists", l_path
+			return 1
+
+		try:
+			os.chdir(l_path)
+		except:
+			print "Can't cd to path", l_path
+			return 1
+
+		return 0
 
 
 #==========================================================================

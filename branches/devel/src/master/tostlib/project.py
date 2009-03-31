@@ -105,8 +105,9 @@ class Project:
 		l_master_path = cls.find_project_root(p_master_path)
 
 		if not l_master_path:
-			logging.error("Can't find project root: " + p_master_path)
 			return None
+
+		logging.message("Project found in " + l_master_path)
 
 		l_config = configuration.Configuration.get_instance()
 
@@ -124,6 +125,12 @@ class Project:
 	@classmethod
 	def create ( cls, p_master_path, p_slave_path ):
 	#----------------------------------------------------------------------
+
+		l_root_path = cls.find_project_root(p_master_path)
+
+		if l_root_path:
+			logging.message("A project already exists, opening " + l_root_path)
+			return cls.open(p_master_path)
 
 		l_master_path = os.path.abspath(p_master_path)
 
@@ -170,7 +177,7 @@ class Project:
 			return False
 
 		if not os.path.exists(l_file_path):
-			logging.error("File doesn't exists: ", l_file_path)
+			logging.error("File doesn't exists: " + l_file_path)
 			return False
 
 		l_file_path = self.__master_path(l_file_path)
@@ -180,9 +187,6 @@ class Project:
 
 		l_command = journal.CMD_ADD
 		l_args    = [l_file_path]
-
-		if self.m_journal.has_entry(l_command, l_args):
-			return True
 
 		return self.m_journal.add_entry(l_command, l_args)
 
@@ -221,9 +225,6 @@ class Project:
 
 		l_command = journal.CMD_REMOVE
 		l_args    = [l_file_path]
-
-		if self.m_journal.has_entry(l_command, l_args):
-			return True
 
 		return self.m_journal.add_entry(l_command, l_args)
 
@@ -279,9 +280,6 @@ class Project:
 		l_command = journal.CMD_RENAME
 		l_args    = [l_old_path, l_new_path]
 
-		if self.m_journal.has_entry(l_command, l_args):
-			return True
-
 		return self.m_journal.add_entry(l_command, l_args)
 
 	#----------------------------------------------------------------------
@@ -309,9 +307,6 @@ class Project:
 			l_command = journal.CMD_UPDATE
 			l_args    = [l_file_path]
 
-			if self.m_journal.has_entry(l_command, l_args):
-				continue
-
 			if not self.m_cache.update_entry(l_file_path, p_simulate=True):
 				return False
 
@@ -335,7 +330,13 @@ class Project:
 		return True
 
 	#----------------------------------------------------------------------
-	def commit ( self ):
+	def has_pending ( self ):
+	#----------------------------------------------------------------------
+
+		return self.m_journal.has_pending()
+
+	#----------------------------------------------------------------------
+	def synchronize ( self, p_now = True ):
 	#----------------------------------------------------------------------
 
 		l_commands = master.make_project_commands(self.m_slave_path)
@@ -371,6 +372,12 @@ class Project:
 			elif l_entry.get_command() == journal.CMD_UPDATE:
 				l_commands = self.__make_update_commands(l_entry)
 				self.__schedule_commands(l_commands)
+
+		if p_now:
+			l_queue = queue.Queue.get_instance()
+
+			while l_queue.process():
+				continue
 
 	#----------------------------------------------------------------------
 	def __make_add_commands ( self, p_journal_entry ):
@@ -591,7 +598,7 @@ class Project:
 	#----------------------------------------------------------------------
 
 		l_start = os.path.commonprefix([self.m_master_path, p_file_path])
-		l_path  = p_file_path[len(l_start):]
+		l_path  = p_file_path[len(l_start):].lstrip(os.sep)
 		return l_path
 
 

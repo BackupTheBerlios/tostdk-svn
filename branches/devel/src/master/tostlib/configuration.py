@@ -30,11 +30,11 @@ import singleton
 
 #==========================================================================
 if sys.platform == 'win32':
-	SITE_CONFIG_FILENAMES   = (os.path.join(os.getcwd(),'tostdk.site.cnf'),)
-	USER_CONFIG_FILENAMES   = ('~\\tostdk.cnf',)
+	SITE_CONFIG_FILENAME = 'C:\\tostdk.cnf'
+	USER_CONFIG_FILENAME = '~\\tostdk.cnf'
 else:
-	SITE_CONFIG_FILENAMES   = ('/etc/tostdk',)
-	USER_CONFIG_FILENAMES   = ('~/.tostdk',)
+	SITE_CONFIG_FILENAME = '/usr/local/etc/tostdk.cnf'
+	USER_CONFIG_FILENAME = '~/.tostdk.cnf'
 #==========================================================================
 
 
@@ -93,7 +93,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'debug': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Debug mode",
 			'type'   : TYPE_BOOL,
 			'default': True
@@ -102,7 +102,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'verbose': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Verbose mode",
 			'type'   : TYPE_BOOL,
 			'default': True
@@ -125,7 +125,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'driver_name': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Driver name",
 			'type'   : TYPE_VALID_STRING,
 			'default': "files_driver"
@@ -134,7 +134,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'files_driver.input': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "File driver input file",
 			'type'   : TYPE_VALID_STRING,
 			'default': "tostdk.input"
@@ -143,7 +143,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'files_driver.output': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "File driver output file",
 			'type'   : TYPE_VALID_STRING,
 			'default': "tostdk.output"
@@ -152,7 +152,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'pipes_driver.command': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Command to execute",
 			'type'   : TYPE_VALID_STRING,
 			'default': ""
@@ -180,7 +180,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'packet_size': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Maximum packet data size",
 			'type'   : TYPE_INT,
 			'default': 4096
@@ -189,7 +189,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'ping_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Ping command timeout",
 			'type'   : TYPE_INT,
 			'default': 2
@@ -198,7 +198,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'chroot_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Chroot command timeout",
 			'type'   : TYPE_INT,
 			'default': 10
@@ -207,7 +207,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'mv_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Mv command timeout",
 			'type'   : TYPE_INT,
 			'default': 10
@@ -216,7 +216,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'rm_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Rm command timeout",
 			'type'   : TYPE_INT,
 			'default': 10
@@ -225,7 +225,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'malloc_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Malloc command timeout",
 			'type'   : TYPE_INT,
 			'default': 2
@@ -234,7 +234,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'free_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Free command timeout",
 			'type'   : TYPE_INT,
 			'default': 2
@@ -243,7 +243,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'download_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Download command timeout",
 			'type'   : TYPE_INT,
 			'default': 120
@@ -252,7 +252,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'unpack_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Unpack command timeout",
 			'type'   : TYPE_INT,
 			'default': 10
@@ -261,7 +261,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'open_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Open command timeout",
 			'type'   : TYPE_INT,
 			'default': 10
@@ -270,7 +270,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'create_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Create command timeout",
 			'type'   : TYPE_INT,
 			'default': 10
@@ -279,7 +279,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'seek_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Seek command timeout",
 			'type'   : TYPE_INT,
 			'default': 10
@@ -288,7 +288,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'read_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Read command timeout",
 			'type'   : TYPE_INT,
 			'default': 120
@@ -297,7 +297,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'write_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Write command timeout",
 			'type'   : TYPE_INT,
 			'default': 120
@@ -306,7 +306,7 @@ CONFIGURATION = {
 		#------------------------------------------------------------------
 		'close_timeout': {
 		#------------------------------------------------------------------
-			'level'  : LEVEL_USER,
+			'level'  : LEVEL_SITE,
 			'desc'   : "Close command timeout",
 			'type'   : TYPE_INT,
 			'default': 60
@@ -361,6 +361,11 @@ class Configuration ( singleton.Singleton ):
 	#----------------------------------------------------------------------
 	def save ( self, p_project_path = '' ):
 	#----------------------------------------------------------------------
+
+		if self.m_site_filename:
+			logging.message('Saving site configuration to ' + self.m_site_filename)
+			if not self.__save_configuration(LEVEL_SITE, self.m_site_filename):
+				return False
 
 		if self.m_user_filename:
 			logging.message('Saving user configuration to ' + self.m_user_filename)
@@ -460,6 +465,26 @@ class Configuration ( singleton.Singleton ):
 		return ''
 
 	#----------------------------------------------------------------------
+	def get_option_type ( self, p_section, p_option ):
+	#----------------------------------------------------------------------
+
+		l_section = p_section.lower()
+		l_option  = p_option.lower()
+
+		if not CONFIGURATION.has_key(l_section):
+			logging.error('Unknow configuration section ' + p_section)
+			return None
+
+		if not CONFIGURATION[l_section].has_key(l_option):
+			logging.error('Unknow configuration option ' + p_option)
+			return None
+
+		if CONFIGURATION[l_section][l_option].has_key('type'):
+			return CONFIGURATION[l_section][l_option]['type']
+
+		return ''
+
+	#----------------------------------------------------------------------
 	def get_option_enum ( self, p_section, p_option ):
 	#----------------------------------------------------------------------
 
@@ -524,10 +549,6 @@ class Configuration ( singleton.Singleton ):
 			logging.error('Unknow configuration option ' + p_option)
 			return False
 
-		if CONFIGURATION[l_section][l_option]['level'] < p_level:
-			logging.error('Wrong level for configuration option ' + p_option)
-			return False
-
 		if not self.m_sections.has_key(l_section):
 			self.m_sections[l_section] = {}
 
@@ -536,25 +557,41 @@ class Configuration ( singleton.Singleton ):
 		return True
 
 	#----------------------------------------------------------------------
+	def set_option_string ( self, p_level, p_section, p_option, p_string ):
+	#----------------------------------------------------------------------
+
+		l_section = p_section.lower()
+		l_option  = p_option.lower()
+
+		if not CONFIGURATION.has_key(l_section):
+			logging.error('Unknow configuration section ' + p_section)
+			return False
+
+		if not CONFIGURATION[l_section].has_key(l_option):
+			logging.error('Unknow configuration option ' + p_option)
+			return False
+
+		l_type = CONFIGURATION[l_section][l_option]['type']
+
+		if not l_type['valid'](p_string):
+			logging.error('Invalid string: ' + p_string)
+			return False
+
+		l_value = l_type['read'](p_string)
+
+		return self.set_option_value(p_level, p_section, p_option, l_value)
+
+	#----------------------------------------------------------------------
 	def __find_site_configuration ( self ):
 	#----------------------------------------------------------------------
 
-		for l_filename in SITE_CONFIG_FILENAMES:
-			if os.path.exists(l_filename):
-				return l_filename
-
-		return ''
+		return SITE_CONFIG_FILENAME
 
 	#----------------------------------------------------------------------
 	def __find_user_configuration ( self ):
 	#----------------------------------------------------------------------
 
-		for l_filename in USER_CONFIG_FILENAMES:
-			l_user_filename = os.path.expanduser(l_filename)
-			if os.path.exists(l_user_filename):
-				return l_user_filename
-
-		return ''
+		return os.path.expanduser(USER_CONFIG_FILENAME)
 
 	#----------------------------------------------------------------------
 	def __find_project_configuration ( self, p_project_path ):
@@ -571,8 +608,8 @@ class Configuration ( singleton.Singleton ):
 		try:
 			l_handle = open(p_filename, 'rU')
 		except:
-			logging.error("Can't open file: " + p_filename)
-			return False
+			logging.warning("Can't open file: " + p_filename)
+			return True
 
 		l_section = ''
 		l_skip    = False
@@ -625,10 +662,6 @@ class Configuration ( singleton.Singleton ):
 					logging.error('Unknow configuration option: ' + l_option + ' in ' + p_filename)
 					continue
 
-				if CONFIGURATION[l_section][l_option]['level'] < p_level:
-					logging.error('Wrong level for configuration option: ' + l_option + ' in ' + p_filename)
-					continue
-
 				l_type = CONFIGURATION[l_section][l_option]['type']
 
 				if not l_type['valid'](l_string):
@@ -649,8 +682,8 @@ class Configuration ( singleton.Singleton ):
 		try:
 			l_handle = open(p_filename, 'wb')
 		except:
-			logging.error("Can't create file: " + p_filename)
-			return False
+			logging.warning("Can't create file: " + p_filename)
+			return True
 
 		for l_section in self.m_sections.iterkeys():
 			l_section_started = False
@@ -661,7 +694,7 @@ class Configuration ( singleton.Singleton ):
 					continue
 
 				if not l_section_started:
-					l_handle.write(os.linesep + '[' + l_section + ']' + os.linesep)
+					l_handle.write('[' + l_section + ']' + os.linesep)
 					l_section_started = True
 
 				if CONFIGURATION[l_section][l_option].has_key('desc'):

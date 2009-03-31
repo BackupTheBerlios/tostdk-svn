@@ -1,6 +1,6 @@
 #==========================================================================
-# tostdk :: tostlib :: shell_create.py
-# Shell project creation command
+# tostdk :: tostlib :: shell_remove.py
+# Shell remove command
 #--------------------------------------------------------------------------
 # Copyright 2009 Jean-Baptiste Berlioz
 #--------------------------------------------------------------------------
@@ -21,21 +21,23 @@
 #==========================================================================
 
 
+import os
+
+import project
 import shell
 import shell_parser
 import shell_command
-import project
 
 
 #==========================================================================
 def register ( ):
 #==========================================================================
 
-	shell.Shell.register_command(ShellCreate)
+	shell.Shell.register_command(ShellRemove)
 
 
 #==========================================================================
-class ShellCreate ( shell_command.ShellCommand ):
+class ShellRemove ( shell_command.ShellCommand ):
 #==========================================================================
 
 	#----------------------------------------------------------------------
@@ -43,46 +45,63 @@ class ShellCreate ( shell_command.ShellCommand ):
 	def get_name ( cls ):
 	#----------------------------------------------------------------------
 
-		return 'create'
+		return 'remove'
 
 	#----------------------------------------------------------------------
 	@classmethod
 	def get_description ( cls ):
 	#----------------------------------------------------------------------
 
-		return 'Create a new project in the current directory.'
+		return 'Remove files from the current project.'
 
 	#----------------------------------------------------------------------
 	@classmethod
 	def get_parameters ( cls ):
 	#----------------------------------------------------------------------
 
-		return shell_parser.ShellParameters(None, (
-			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'masterpath',
-				'Local path.'),
-			shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'slavepath',
-				'Remote path.'),
+		return shell_parser.ShellParameters(
+		(
+			shell_parser.ShellOption(shell_parser.TYPE_BOOL, 'now',
+				'n', 'now',
+				False, "Synchronize immediately."),
+		),
+		(	shell_parser.ShellArgument(shell_parser.TYPE_STRING, 'path',
+				'List of files to remove.'),
 		))
 
 	#----------------------------------------------------------------------
 	def execute ( self, p_args ):
 	#----------------------------------------------------------------------
 
-		if not ('masterpath' in p_args):
-			print "No local path given."
+		if not ('path' in p_args):
+			print "No path given."
 			return 2
 
-		if not ('slavepath' in p_args):
-			print "No remote path given."
-			return 2
+		l_path = p_args['path']
 
-		l_master_path = p_args['masterpath']
-		l_slave_path  = p_args['slavepath']
-
-		l_project = project.Project.create(l_master_path, l_slave_path)
+		l_project = project.Project.open(os.getcwd())
 
 		if l_project == None:
-			print "Can't create project."
+			print "No project found."
+			return 1
+
+		l_failed = False
+
+		if not isinstance(l_path, list):
+			l_path = [l_path]
+
+		for t_path in l_path:
+			if not l_project.remove_file(t_path):
+				print "Can't remove", t_path
+				l_failed = True
+
+		if l_failed:
+			return 1
+
+		if p_args['now']:
+			l_project.synchronize(True)
+
+		if l_failed:
 			return 1
 
 		return 0

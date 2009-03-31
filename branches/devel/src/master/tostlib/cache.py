@@ -378,7 +378,7 @@ class Cache:
 			return False
 
 		if l_version == 1:
-			l_result = self.__load_db_1(self, l_handle)
+			l_result = self.__load_db_1(l_handle)
 
 		else:
 			logging.error("Unsupported cache version: " + self.m_cache_path)
